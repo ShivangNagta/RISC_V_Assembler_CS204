@@ -6,19 +6,15 @@
 
 using namespace std;
 
-int main() {
-    ifstream file("./input/input.asm");
-    string read;
+int main(int argc, char* argv[]) {
 
-    if(!file){
-        cout << "Could not read fileas" << endl;
+    if(argc != 3) {
+        cerr << "Error : Following arguements needs to be passed to " << argv[0] << ": <input.asm> <output.mc>\n";
         return 1;
     }
 
-    string s = RISCV_CONSTANTS::TEXT_DIRECTIVE;
-
-    while(getline(file, read)){
-        cout << read << endl;
-    }
+    // Assembler assembler;
+    
+    return 0;
 }
 

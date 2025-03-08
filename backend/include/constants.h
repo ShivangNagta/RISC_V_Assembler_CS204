@@ -1,6 +1,6 @@
 /*
-This file contains all the constants that will be used throughout the program.
-Constants are stored under the namespace RISCV_CONSTANTS
+This file contains all the constants that will be used throughout the project.
+Constants are stored under the namespace RISCV_CONSTANTS for more intutive developer experience
 */
 
 #pragma once
@@ -12,6 +12,17 @@ Constants are stored under the namespace RISCV_CONSTANTS
 using namespace std;
 
 namespace RISCV_CONSTANTS {
+
+    // Instructions
+    enum class INSTRUCTIONS {
+        ADD, AND, OR, SLL, SLT, SRA, SRL, SUB, XOR, MUL, DIV, REM,
+        ADDI, ANDI, ORI, 
+        LB, LH, LW, LD,
+        SB, SH, SW, SD,
+        BEQ, BNE, BLT, BGE,
+        JAL, JALR,
+        LUI, AUIPC
+    };
 
     // Memory segment starting addresses
     constexpr uint32_t TEXT_SEGMENT_START = 0x00000000;
@@ -29,7 +40,7 @@ namespace RISCV_CONSTANTS {
     constexpr uint32_t OPCODE_S_TYPE = 0b0100011;
     constexpr uint32_t OPCODE_SB_TYPE = 0b1100011;
     constexpr uint32_t OPCODE_J_TYPE_JAL = 0b1101111;
-    constexpr uint32_t OPCODE_J_TYPE_JALR = 0b1100111;
+    constexpr uint32_t OPCODE_I_TYPE_JALR = 0b1100111;
     constexpr uint32_t OPCODE_UJ_TYPE_LUI = 0b0110111;
     constexpr uint32_t OPCODE_UJ_TYPE_AUIPC = 0b0010111;
     // constexpr uint32_t OPCODE_I_TYPE_ENV = 0b1110011;
