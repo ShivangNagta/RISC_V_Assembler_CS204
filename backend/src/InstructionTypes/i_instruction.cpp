@@ -1,4 +1,4 @@
-#include "i_instruction.h"
+#include "InstructionTypes/i_instruction.h"
 
 uint32_t IInstruction::generate_machine_code() const {
     return imm << 20 |

@@ -13,5 +13,5 @@ public:
     RInstruction (uint32_t funct7, uint32_t rs2, uint32_t rs1, uint32_t funct3, uint32_t rd, uint32_t op)
     : Instruction(op), rs2(rs2), rs1(rs1), rd(rd), funct3(funct3), funct7(funct7) {};
 
-    uint32_t generate_machine_code () const override {};
+    uint32_t generate_machine_code () const override;
 };

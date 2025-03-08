@@ -6,6 +6,7 @@ We will be using Factory Design Pattern to create the instructions by directly t
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 class Instruction {
 protected:

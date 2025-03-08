@@ -3,21 +3,25 @@
 #include "InstructionTypes/r_instruction.h"
 #include "InstructionTypes/i_instruction.h"
 #include <unordered_map>
+#include <iostream>
 
 static RISCV_CONSTANTS::INSTRUCTIONS instruction_map(const std::string& inst);
 
 std::unique_ptr<Instruction> InstructionFactory::create(const std::string& inst, 
-                                                        const std::string operands[3], // rs2 rs1 rd (right to left)
+                                                        const std::vector<std::string>& operands, // rd rs1 rs2 (left to right)
                                                         const SymbolTable& symbols, // 
                                                         uint32_t address) {
+                                                            for(int i = 0; i<3; ++i){
+                                                                std::cout << operands[i] << std::endl;
+                                                            }
     switch (instruction_map(inst)) {
 
         case RISCV_CONSTANTS::INSTRUCTIONS::ADD:
             return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_ADD,
-                                                  RISCV_CONSTANTS::REGISTERS.at(operands[0]),
+                                                  RISCV_CONSTANTS::REGISTERS.at(operands[2]),
                                                   RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                   RISCV_CONSTANTS::FUNCT3_ADD,
-                                                  RISCV_CONSTANTS::REGISTERS.at(operands[2]),
+                                                  RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                                   RISCV_CONSTANTS::OPCODE_R_TYPE);
 
         // case RISCV_CONSTANTS::INSTRUCTIONS::SUB:
@@ -32,9 +36,15 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string& inst,
         // case RISCV_CONSTANTS::INSTRUCTIONS::DIV:
         // case RISCV_CONSTANTS::INSTRUCTIONS::REM:
 
-        case RISCV_CONSTANTS::INSTRUCTIONS::ADDI:
+        case RISCV_CONSTANTS::INSTRUCTIONS::ANDI:
+            return std::make_unique<IInstruction>(
+                                                    std::stoi(operands[2], nullptr, 0),
+                                                    RISCV_CONSTANTS::REGISTERS.at(operands[1]),
+                                                    RISCV_CONSTANTS::FUNCT3_ANDI,
+                                                    RISCV_CONSTANTS::REGISTERS.at(operands[0]),
+                                                    RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
 
-        // case RISCV_CONSTANTS::INSTRUCTIONS::ANDI:
+        // case RISCV_CONSTANTS::INSTRUCTIONS::ADDI:
         // case RISCV_CONSTANTS::INSTRUCTIONS::ORI:
         // case RISCV_CONSTANTS::INSTRUCTIONS::LB:
         // case RISCV_CONSTANTS::INSTRUCTIONS::LH:

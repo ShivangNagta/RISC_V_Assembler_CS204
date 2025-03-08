@@ -11,7 +11,7 @@ This is the factory class for creating the instructions
 class InstructionFactory {
 public:
     static std::unique_ptr<Instruction> create(const std::string& inst, 
-                                               const std::string operands[3],
+                                               const std::vector<std::string>& operands,
                                                const SymbolTable& symbols,
                                                uint32_t address);
 };

@@ -1,16 +1,16 @@
 /*
-Symbol Table created in the first pass which stores the address of the labels
+Symbol Table created in the first pass which stores the address of the label
 */
 
 #pragma once
-#include <unordered_map>
+
 #include <string>
+#include <unordered_map>
 
 class SymbolTable {
     std::unordered_map<std::string, uint32_t> labels;
-    
 public:
-    void add_label(const std::string& label, uint32_t address);
-    uint32_t get_address(const std::string& label) const;
-    bool exists(const std::string& label) const;
+    void addLabel(const std::string& label, uint32_t address);
+    uint32_t getAddress(const std::string& label) const;
+    bool labelExists(const std::string& label) const;
 };

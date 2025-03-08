@@ -1,4 +1,4 @@
-#include "r_instruction.h"
+#include "InstructionTypes/r_instruction.h"
 
 uint32_t RInstruction::generate_machine_code() const {
     return funct7 << 25 |
