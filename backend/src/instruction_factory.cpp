@@ -7,8 +7,8 @@
 static RISCV_CONSTANTS::INSTRUCTIONS instruction_map(const std::string& inst);
 
 std::unique_ptr<Instruction> InstructionFactory::create(const std::string& inst, 
-                                                        const std::string operands[3], // rs2 rs1 rd
-                                                        const SymbolTable& symbols,
+                                                        const std::string operands[3], // rs2 rs1 rd (right to left)
+                                                        const SymbolTable& symbols, // 
                                                         uint32_t address) {
     switch (instruction_map(inst)) {
 
