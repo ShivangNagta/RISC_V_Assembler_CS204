@@ -16,14 +16,14 @@ fibo:
     # n==2
     # sending a
     add x10, x0, x3
-    jalr x0, 0(x1)
+    jalr x0, x1, 0
     labelA:
         addi x5, x0, 1
         bne x8, x5, labelB
         # n==1
         # sending b
         add x10, x0, x4
-        jalr x0, 0(x1)
+        jalr x0, x1, 0
     labelB:
         # storing x8 and x1
         addi sp, sp, -12
@@ -47,5 +47,5 @@ fibo:
         lw x1, 0(sp)
         addi sp, sp, 12
         # returning to main
-        jalr x0, 0(x1)
+        jalr x0, x1, 0
     endProgram:
