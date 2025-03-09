@@ -79,17 +79,3 @@ The frontend is being developed using Vite and React. Once completed, it will pr
 - Displaying register values and memory state
 - Step-by-step execution
 
-### Setting Up the Frontend for Development
-Navigate to the frontend directory:
-```sh
-cd frontend
-```
-Install dependencies:
-```sh
-npm install
-```
-Start the development server:
-```sh
-npm run dev
-```
-
