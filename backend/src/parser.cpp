@@ -85,7 +85,7 @@ void Parser::parse(std::string line, uint32_t &address,
     // Directive processing
     if (directives.isDirective(line))
     {
-        directives.process(line, address, *out, firstPass);
+        directives.process(line, address, firstPass);
         return;
     }
 
