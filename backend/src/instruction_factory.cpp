@@ -14,7 +14,7 @@ static RISCV_CONSTANTS::INSTRUCTIONS instruction_map(const std::string &inst);
 
 std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                         const std::vector<std::string> &operands, // rd rs1 rs2 (left to right)
-                                                        const SymbolTable &symbols,               //
+                                                        const SymbolTable &symbols,              
                                                         uint32_t address)
 {
     for (int i = 0; i < 3; ++i)

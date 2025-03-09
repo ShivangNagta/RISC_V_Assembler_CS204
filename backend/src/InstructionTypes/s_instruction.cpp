@@ -1,4 +1,5 @@
 #include "InstructionTypes/s_instruction.h"
+#include <sstream>
 
 uint32_t SInstruction::generate_machine_code() const
 {
@@ -8,4 +9,9 @@ uint32_t SInstruction::generate_machine_code() const
            (funct3 << 12) |
            ((imm & 0x1F) << 7) | // imm[4:0]
            op;
+}
+
+std::string SInstruction::generate_comment() const {
+    std::stringstream ss;
+    return ss.str();
 }

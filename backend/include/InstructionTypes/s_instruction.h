@@ -16,4 +16,5 @@ class SInstruction : public Instruction {
     
 
     uint32_t generate_machine_code () const override;
+    std::string generate_comment() const override;
 };

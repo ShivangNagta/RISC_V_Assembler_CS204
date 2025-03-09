@@ -1,4 +1,5 @@
 #include "InstructionTypes/uj_instruction.h"
+#include <sstream>
 
 uint32_t UJInstruction::generate_machine_code() const
 {
@@ -8,4 +9,10 @@ uint32_t UJInstruction::generate_machine_code() const
            (((imm >> 1) & 0x3FF) << 21) | // imm[10:1]
            (rd << 7) |
            op;
+}
+
+
+std::string UJInstruction::generate_comment() const {
+    std::stringstream ss;
+    return ss.str();
 }

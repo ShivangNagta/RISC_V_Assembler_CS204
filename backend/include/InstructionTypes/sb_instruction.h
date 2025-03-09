@@ -15,4 +15,5 @@ class SBInstruction : public Instruction {
         : Instruction(op), rs2(rs2), rs1(rs1), funct3(funct3), imm(imm) {};
 
     uint32_t generate_machine_code () const override;
+    std::string generate_comment() const override;
 };

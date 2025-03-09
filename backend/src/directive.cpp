@@ -18,3 +18,4 @@ void DirectiveHandler::process(const std::string& directive, uint32_t& address,
     }
     // Handle .word, .byte, etc.
 }
+

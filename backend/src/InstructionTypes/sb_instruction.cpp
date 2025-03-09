@@ -1,4 +1,5 @@
 #include "InstructionTypes/sb_instruction.h"
+#include <sstream>
 
 uint32_t SBInstruction::generate_machine_code() const
 {
@@ -10,4 +11,9 @@ uint32_t SBInstruction::generate_machine_code() const
            ((imm & 0x1E) >> 1) << 8 |   // imm[4:1]
            ((imm & 0x800) >> 11) << 7 | // imm[11]
            op;
+}
+
+std::string SBInstruction::generate_comment() const {
+    std::stringstream ss;
+    return ss.str();
 }
