@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
         cout << "Successfully assembled to '" << argv[2] << "'\n";
     } 
     catch (const exception& e) {
-        cerr << "Assembly Error: " << e.what() << "\n";
+        cerr << "Error: " << e.what() << "\n";
         return 3;
     }
 
