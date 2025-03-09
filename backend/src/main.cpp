@@ -2,10 +2,9 @@
 #include <fstream>
 #include <filesystem>
 #include "assembler.h"
-// #include "constants.h"
 
 using namespace std;
-namespace fs = std::filesystem;  // C++17 filesystem namespace
+namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
     try {

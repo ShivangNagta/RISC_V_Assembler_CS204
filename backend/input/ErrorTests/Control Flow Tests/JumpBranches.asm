@@ -1,9 +1,3 @@
-beq x0, x0, label1
-label1:
-jalr x0, 0(x0)
-lui 
-
-.data
 jal x1, func        # Valid: 0x??????EF (UJ-type)
 func: jalr x0, 0(x1) # Valid return: 0x00008067
 
