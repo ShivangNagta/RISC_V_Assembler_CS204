@@ -1,5 +1,6 @@
 #include "InstructionTypes/sb_instruction.h"
 #include <sstream>
+#include <bitset>
 
 uint32_t SBInstruction::generate_machine_code() const
 {
@@ -15,5 +16,13 @@ uint32_t SBInstruction::generate_machine_code() const
 
 std::string SBInstruction::generate_comment() const {
     std::stringstream ss;
+    ss << std::bitset<7>(op) << "-"   
+       << std::bitset<3>(funct3) << "-"
+       << "NULL" << "-"  
+       << "NULL" << "-"  // No rd in SB-type
+       << std::bitset<5>(rs1) << "-"  
+       << std::bitset<5>(rs2) << "-"
+       << std::bitset<12>(imm);       
+
     return ss.str();
 }

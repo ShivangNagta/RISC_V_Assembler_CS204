@@ -6,6 +6,7 @@ Symbol Table created in the first pass which stores the address of the label
 
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 class SymbolTable {
     std::unordered_map<std::string, uint32_t> labels;

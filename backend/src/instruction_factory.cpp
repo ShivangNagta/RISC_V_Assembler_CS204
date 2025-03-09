@@ -6,18 +6,42 @@
 #include "InstructionTypes/sb_instruction.h"
 #include "InstructionTypes/u_instruction.h"
 #include "InstructionTypes/uj_instruction.h"
-#include "InstructionTypes/b_instruction.h"
 #include <unordered_map>
 #include <iostream>
 
 static RISCV_CONSTANTS::INSTRUCTIONS instruction_map(const std::string &inst);
 
+// Helper function to parse memory operands like "8(x5)"
+std::pair<int32_t, std::string> parseMemoryOperand(const std::string &operand)
+{
+    size_t openParen = operand.find('(');
+    size_t closeParen = operand.find(')');
+
+    if (openParen != std::string::npos && closeParen != std::string::npos)
+    {
+        // Extract the offset (before the parenthesis)
+        std::string offsetStr = operand.substr(0, openParen);
+        int32_t offset = 0;
+        if (!offsetStr.empty())
+        {
+            offset = std::stoi(offsetStr, nullptr, 0);
+        }
+
+        // Extract the register (between parentheses)
+        std::string baseReg = operand.substr(openParen + 1, closeParen - openParen - 1);
+        cout << "offset: " << offset << " baseReg: " << baseReg << endl;
+        return {offset, baseReg};
+    }
+
+    throw std::runtime_error("Invalid memory operand format: " + operand);
+}
+
 std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                         const std::vector<std::string> &operands, // rd rs1 rs2 (left to right)
-                                                        const SymbolTable &symbols,              
+                                                        const SymbolTable &symbols,
                                                         uint32_t address)
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < operands.size(); ++i)
     {
         std::cout << operands[i] << std::endl;
     }
@@ -158,82 +182,88 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
 
-    // Load instructions (LB, LH, LW, LD)
-    // These typically have a format like: lw rd, imm(rs1)
-    // But your operands seem to be [rd, rs1, imm] based on the code
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::LB:
+        // Load instructions (LB, LH, LW, LD)
     case RISCV_CONSTANTS::INSTRUCTIONS::LB:
-        return std::make_unique<IInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_LB,
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::LH:
     case RISCV_CONSTANTS::INSTRUCTIONS::LH:
-        return std::make_unique<IInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_LH,
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::LW:
     case RISCV_CONSTANTS::INSTRUCTIONS::LW:
-        return std::make_unique<IInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_LW,
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::LD:
     case RISCV_CONSTANTS::INSTRUCTIONS::LD:
-        return std::make_unique<IInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_LD,
+    {
+        // Parse the memory operand (offset(register))
+        auto [offset, baseReg] = parseMemoryOperand(operands[1]);
+
+        uint32_t funct3;
+        switch (instruction_map(inst))
+        {
+        case RISCV_CONSTANTS::INSTRUCTIONS::LB:
+            funct3 = RISCV_CONSTANTS::FUNCT3_LB;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::LH:
+            funct3 = RISCV_CONSTANTS::FUNCT3_LH;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::LW:
+            funct3 = RISCV_CONSTANTS::FUNCT3_LW;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::LD:
+            funct3 = RISCV_CONSTANTS::FUNCT3_LD;
+            break;
+        default:
+            throw std::invalid_argument("Unsupported load instruction");
+        }
+
+        return std::make_unique<IInstruction>(offset,
+                                              RISCV_CONSTANTS::REGISTERS.at(baseReg),
+                                              funct3,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
+    }
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::JALR:
+    // JALR (Jump And Link Register)
     case RISCV_CONSTANTS::INSTRUCTIONS::JALR:
-        return std::make_unique<IInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
+    {
+        // Parse the memory operand (offset(register))
+        auto [offset, baseReg] = parseMemoryOperand(operands[1]);
+
+        return std::make_unique<IInstruction>(offset,
+                                              RISCV_CONSTANTS::REGISTERS.at(baseReg),
                                               RISCV_CONSTANTS::FUNCT3_JALR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_I_TYPE_JALR);
+    }
 
-    // S-Type instructions
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SB:
+    // Store instructions (SB, SH, SW, SD)
     case RISCV_CONSTANTS::INSTRUCTIONS::SB:
-        return std::make_unique<SInstruction>(std::stoi(operands[2], nullptr, 0),         // immediate
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]), // rs2 (source register)
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]), // rs1 (base address)
-                                              RISCV_CONSTANTS::FUNCT3_SB,
-                                              RISCV_CONSTANTS::OPCODE_S_TYPE);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SH:
     case RISCV_CONSTANTS::INSTRUCTIONS::SH:
-        return std::make_unique<SInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_SH,
-                                              RISCV_CONSTANTS::OPCODE_S_TYPE);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SW:
     case RISCV_CONSTANTS::INSTRUCTIONS::SW:
-        return std::make_unique<SInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_SW,
-                                              RISCV_CONSTANTS::OPCODE_S_TYPE);
-
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SD:
     case RISCV_CONSTANTS::INSTRUCTIONS::SD:
-        return std::make_unique<SInstruction>(std::stoi(operands[2], nullptr, 0),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::REGISTERS.at(operands[1]),
-                                              RISCV_CONSTANTS::FUNCT3_SD,
+    {
+        // Parse the memory operand (offset(register))
+        auto [offset, baseReg] = parseMemoryOperand(operands[1]);
+
+        uint32_t funct3;
+        switch (instruction_map(inst))
+        {
+        case RISCV_CONSTANTS::INSTRUCTIONS::SB:
+            funct3 = RISCV_CONSTANTS::FUNCT3_SB;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::SH:
+            funct3 = RISCV_CONSTANTS::FUNCT3_SH;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::SW:
+            funct3 = RISCV_CONSTANTS::FUNCT3_SW;
+            break;
+        case RISCV_CONSTANTS::INSTRUCTIONS::SD:
+            funct3 = RISCV_CONSTANTS::FUNCT3_SD;
+            break;
+        default:
+            throw std::invalid_argument("Unsupported store instruction");
+        }
+
+        return std::make_unique<SInstruction>(offset,
+                                              RISCV_CONSTANTS::REGISTERS.at(operands[0]), // rs2 (source register)
+                                              RISCV_CONSTANTS::REGISTERS.at(baseReg),     // rs1 (base register)
+                                              funct3,
                                               RISCV_CONSTANTS::OPCODE_S_TYPE);
+    }
 
     // SB-Type instructions
     // case RISCV_CONSTANTS::INSTRUCTIONS::BEQ:
@@ -252,7 +282,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
             offset = symbols.getAddress(operands[2]) - address;
         }
 
-        return std::make_unique<BInstruction>(offset,
+        return std::make_unique<SBInstruction>(offset,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::FUNCT3_BEQ,
@@ -272,7 +302,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
             offset = symbols.getAddress(operands[2]) - address;
         }
 
-        return std::make_unique<BInstruction>(offset,
+        return std::make_unique<SBInstruction>(offset,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::FUNCT3_BNE,
@@ -292,7 +322,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
             offset = symbols.getAddress(operands[2]) - address;
         }
 
-        return std::make_unique<BInstruction>(offset,
+        return std::make_unique<SBInstruction>(offset,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::FUNCT3_BLT,
@@ -312,7 +342,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
             offset = symbols.getAddress(operands[2]) - address;
         }
 
-        return std::make_unique<BInstruction>(offset,
+        return std::make_unique<SBInstruction>(offset,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::FUNCT3_BGE,

@@ -1,5 +1,6 @@
 #include "InstructionTypes/i_instruction.h"
 #include <sstream>
+#include <bitset>
 
 uint32_t IInstruction::generate_machine_code() const
 {
