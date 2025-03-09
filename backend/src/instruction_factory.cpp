@@ -9,10 +9,10 @@
 #include <unordered_map>
 #include <iostream>
 
-struct InstructionInfo {
+struct InstructionInfo
+{
     RISCV_CONSTANTS::INSTRUCTIONS opcode;
     int operandCount;
-    // You can add more attributes here as needed
 };
 
 static InstructionInfo instruction_map(const std::string &inst);
@@ -35,7 +35,8 @@ std::pair<int32_t, std::string> parseMemoryOperand(const std::string &operand)
 
         // Extract the register (between parentheses)
         std::string baseReg = operand.substr(openParen + 1, closeParen - openParen - 1);
-        if (RISCV_CONSTANTS::REGISTERS.find(baseReg) == RISCV_CONSTANTS::REGISTERS.end()) {
+        if (RISCV_CONSTANTS::REGISTERS.find(baseReg) == RISCV_CONSTANTS::REGISTERS.end())
+        {
             throw std::runtime_error("Invalid register name in memory operand: '" + baseReg + "'");
         }
         cout << "offset: " << offset << " baseReg: " << baseReg << endl;
@@ -83,9 +84,8 @@ void validateBranchOffset(int32_t offset, const std::string &inst)
 // Helper function to check if immediate is within 20-bit range
 void validateUTypeImmediateRange(int32_t imm, const std::string &inst)
 {
-    const int32_t MIN_IMM = 0;       // U-type immediates are typically unsigned
-    const int32_t MAX_IMM = 0xFFFFF; // 20 bits (0xFFFFF)
-
+    const int32_t MIN_IMM = 0;
+    const int32_t MAX_IMM = 0xFFFFF;
     if (imm < MIN_IMM || imm > MAX_IMM)
     {
         throw std::out_of_range("Immediate value " + std::to_string(imm) +
@@ -95,20 +95,23 @@ void validateUTypeImmediateRange(int32_t imm, const std::string &inst)
 }
 
 // Helper function to check if jump offset is within 21-bit signed range and properly aligned
-void validateJumpOffset(int32_t offset, const std::string& inst) {
-    const int32_t MIN_OFFSET = -1048576;  // -2^20
-    const int32_t MAX_OFFSET = 1048575;   // 2^20 - 1
-    
-    if (offset < MIN_OFFSET || offset > MAX_OFFSET) {
-        throw std::out_of_range("Jump offset " + std::to_string(offset) + 
-                               " for instruction '" + inst + 
-                               "' exceeds 21-bit signed range (-1048576 to 1048575)");
+void validateJumpOffset(int32_t offset, const std::string &inst)
+{
+    const int32_t MIN_OFFSET = -1048576; // -2^20
+    const int32_t MAX_OFFSET = 1048575;  // 2^20 - 1
+
+    if (offset < MIN_OFFSET || offset > MAX_OFFSET)
+    {
+        throw std::out_of_range("Jump offset " + std::to_string(offset) +
+                                " for instruction '" + inst +
+                                "' exceeds 21-bit signed range (-1048576 to 1048575)");
     }
-    
-    if (offset % 2 != 0) {
-        throw std::invalid_argument("Jump offset " + std::to_string(offset) + 
-                                   " for instruction '" + inst + 
-                                   "' must be even (2-byte aligned)");
+
+    if (offset % 2 != 0)
+    {
+        throw std::invalid_argument("Jump offset " + std::to_string(offset) +
+                                    " for instruction '" + inst +
+                                    "' must be even (2-byte aligned)");
     }
 }
 
@@ -121,50 +124,57 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
     {
         std::cout << operands[i] << std::endl;
     }
-    // Helper function to check if an operand is likely a register reference
-    auto isLikelyRegister = [&symbols](const std::string& op) -> bool {
-        if (op.empty()) return false;
-        // If it contains parentheses, it's likely a memory reference, not just a register
-        if (op.find('(') != std::string::npos) return false;
-        // If it starts with a digit, it's likely an immediate value
-        if (isdigit(op[0]) || op[0] == '-' || op[0] == '+') return false;
-        // If it starts with "0x", it's likely a hex value
-        if (op.size() >= 2 && op.substr(0, 2) == "0x") return false;
-        // If it's a known label in the symbol table, it's not a register
-    if (symbols.labelExists(op)) return false;
-    
-    // If it's one of the common RISC-V register prefixes, it's likely a register
-    if (op[0] == 'x' || op[0] == 'a' || op[0] == 't' || op[0] == 's' || 
-        op == "ra" || op == "sp" || op == "gp" || op == "tp" || op == "fp" || op == "zero") {
-        return true;
-    }
+
+    // Tp check if a string is likely a register name
+    auto isLikelyRegister = [&symbols](const std::string &op) -> bool
+    {
+        // checking multiple conditions to determine if it's a register
+        if (op.empty())
+            return false;
+        if (op.find('(') != std::string::npos)
+            return false;
+        if (isdigit(op[0]) || op[0] == '-' || op[0] == '+')
+            return false;
+        if (op.size() >= 2 && op.substr(0, 2) == "0x")
+            return false;
+        if (symbols.labelExists(op))
+            return false;
+        if (op[0] == 'x' || op[0] == 'a' || op[0] == 't' || op[0] == 's' ||
+            op == "ra" || op == "sp" || op == "gp" || op == "tp" || op == "fp" || op == "zero")
+        {
+            return true;
+        }
         return false;
     };
+
     // Validate registers before processing any instruction
-    for (const auto& operand : operands) {
-        if (isLikelyRegister(operand)) {
+    for (const auto &operand : operands)
+    {
+        if (isLikelyRegister(operand))
+        {
             // Check if it's in the register map
-            if (RISCV_CONSTANTS::REGISTERS.find(operand) == RISCV_CONSTANTS::REGISTERS.end()) {
-                throw std::runtime_error("Invalid register name: '" + operand + 
-                                        "' in instruction: '" + inst + "'");
+            if (RISCV_CONSTANTS::REGISTERS.find(operand) == RISCV_CONSTANTS::REGISTERS.end())
+            {
+                throw std::runtime_error("Invalid register name: '" + operand +
+                                         "' in instruction: '" + inst + "'");
             }
         }
     }
 
     // Get instruction info with attributes
     InstructionInfo info = instruction_map(inst);
-    
+
     // Validate operand count
-    if (operands.size() != info.operandCount) {
-        throw std::runtime_error("Incorrect number of operands for '" + inst + 
-                               "'. Expected " + std::to_string(info.operandCount) + 
-                               ", got " + std::to_string(operands.size()));
+    if (operands.size() != info.operandCount)
+    {
+        throw std::runtime_error("Incorrect number of operands for '" + inst +
+                                 "'. Expected " + std::to_string(info.operandCount) +
+                                 ", got " + std::to_string(operands.size()));
     }
     switch (info.opcode)
     {
 
     // R-Type instructions
-    // case RISCV_CONSTANTS::INSTRUCTIONS::ADD:
     case RISCV_CONSTANTS::INSTRUCTIONS::ADD:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_ADD,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -173,7 +183,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SUB:
     case RISCV_CONSTANTS::INSTRUCTIONS::SUB:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SUB,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -182,7 +191,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::AND:
     case RISCV_CONSTANTS::INSTRUCTIONS::AND:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_AND,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -191,7 +199,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::OR:
     case RISCV_CONSTANTS::INSTRUCTIONS::OR:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_OR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -200,7 +207,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::XOR:
     case RISCV_CONSTANTS::INSTRUCTIONS::XOR:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_XOR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -209,7 +215,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SLL:
     case RISCV_CONSTANTS::INSTRUCTIONS::SLL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SLL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -218,7 +223,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SRL:
     case RISCV_CONSTANTS::INSTRUCTIONS::SRL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SRL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -227,7 +231,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SRA:
     case RISCV_CONSTANTS::INSTRUCTIONS::SRA:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SRA,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -236,7 +239,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::SLT:
     case RISCV_CONSTANTS::INSTRUCTIONS::SLT:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SLT,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -245,7 +247,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::MUL:
     case RISCV_CONSTANTS::INSTRUCTIONS::MUL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_MUL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -254,7 +255,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::DIV:
     case RISCV_CONSTANTS::INSTRUCTIONS::DIV:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_DIV,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -263,7 +263,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // case RISCV_CONSTANTS::INSTRUCTIONS::REM:
     case RISCV_CONSTANTS::INSTRUCTIONS::REM:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_REM,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[2]),
@@ -272,7 +271,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                               RISCV_CONSTANTS::OPCODE_R_TYPE);
 
-    // I-Type instructions with range checking
+    // I-Type instructions
     case RISCV_CONSTANTS::INSTRUCTIONS::ANDI:
     {
         int32_t imm = std::stoi(operands[2], nullptr, 0);
@@ -306,16 +305,16 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
     }
 
-    // Load instructions with range checking
+    // Load instructions
     case RISCV_CONSTANTS::INSTRUCTIONS::LB:
     case RISCV_CONSTANTS::INSTRUCTIONS::LH:
     case RISCV_CONSTANTS::INSTRUCTIONS::LW:
     case RISCV_CONSTANTS::INSTRUCTIONS::LD:
     {
-        // Parse the memory operand (offset(register))
+        // offset register syntax handling
         auto [offset, baseReg] = parseMemoryOperand(operands[1]);
 
-        // Validate the offset is within range
+        // offset range check
         validateImmediateRange(offset, inst);
 
         uint32_t funct3;
@@ -344,13 +343,13 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
     }
 
-    // JALR with range checking
+    // jalr instruction
     case RISCV_CONSTANTS::INSTRUCTIONS::JALR:
     {
-        // Parse the memory operand (offset(register))
+        // offset register syntax handling
         auto [offset, baseReg] = parseMemoryOperand(operands[1]);
 
-        // Validate the offset is within range
+        // offset range check
         validateImmediateRange(offset, "jalr");
 
         return std::make_unique<IInstruction>(offset,
@@ -366,10 +365,10 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
     case RISCV_CONSTANTS::INSTRUCTIONS::SW:
     case RISCV_CONSTANTS::INSTRUCTIONS::SD:
     {
-        // Parse the memory operand (offset(register))
+        // offset register syntax handling
         auto [offset, baseReg] = parseMemoryOperand(operands[1]);
 
-        // Validate the offset is within 12-bit signed range
+        // offset range check
         validateImmediateRange(offset, inst);
 
         uint32_t funct3;
@@ -398,18 +397,19 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::OPCODE_S_TYPE);
     }
 
-        // SB-Type instructions with range checking
+    // SB-Type instructions
     case RISCV_CONSTANTS::INSTRUCTIONS::BEQ:
     {
         // Calculate branch offset relative to current address
         int32_t offset;
         if (operands[2][0] >= '0' && operands[2][0] <= '9')
         {
-            // Immediate value provided directly
+            // if immediate value given directly
             offset = std::stoi(operands[2], nullptr, 0);
         }
         else
         {
+            // if label given
             try
             {
                 offset = symbols.getAddress(operands[2]) - address;
@@ -518,13 +518,13 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                RISCV_CONSTANTS::OPCODE_SB_TYPE);
     }
 
-    // U-Type instructions with range checking
+    // U-Type instructions
     case RISCV_CONSTANTS::INSTRUCTIONS::LUI:
     {
         int32_t imm = std::stoi(operands[1], nullptr, 0);
         cout << "imm: " << imm << endl;
 
-        // Validate the immediate is within 20-bit range
+        // range check
         validateUTypeImmediateRange(imm, "lui");
 
         return std::make_unique<UInstruction>(imm,
@@ -537,7 +537,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         int32_t imm = std::stoi(operands[1], nullptr, 0);
         cout << "imm: " << imm << endl;
 
-        // Validate the immediate is within 20-bit range
+        // range check
         validateUTypeImmediateRange(imm, "auipc");
 
         return std::make_unique<UInstruction>(imm,
@@ -545,47 +545,45 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::OPCODE_U_TYPE_AUIPC);
     }
 
-    // UJ-Type instruction (JAL) with range checking
-case RISCV_CONSTANTS::INSTRUCTIONS::JAL:
-{
-    int32_t offset;
-    if (operands[1][0] >= '0' && operands[1][0] <= '9')
+        // UJ-Type instruction (JAL) with range checking
+    case RISCV_CONSTANTS::INSTRUCTIONS::JAL:
     {
-        // Immediate value provided directly
-        offset = std::stoi(operands[1], nullptr, 0);
-    }
-    else
-    {
-        try
+        int32_t offset;
+        if (operands[1][0] >= '0' && operands[1][0] <= '9')
         {
-            // Calculate offset relative to current address
-            offset = symbols.getAddress(operands[1]) - address;
+            // if immediate value given directly
+            offset = std::stoi(operands[1], nullptr, 0);
         }
-        catch (const std::exception &e)
+        else
         {
-            throw std::runtime_error("Label " + operands[1] + " not found");
+            // if label given
+            try
+            {
+                offset = symbols.getAddress(operands[1]) - address;
+            }
+            catch (const std::exception &e)
+            {
+                throw std::runtime_error("Label " + operands[1] + " not found");
+            }
         }
-    }
-    
-    // Validate jump offset
-    validateJumpOffset(offset, "jal");
 
-    return std::make_unique<UJInstruction>(offset,
-                                           RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                           RISCV_CONSTANTS::OPCODE_UJ_TYPE_JAL);
-}
+        // Validate jump offset
+        validateJumpOffset(offset, "jal");
+
+        return std::make_unique<UJInstruction>(offset,
+                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
+                                               RISCV_CONSTANTS::OPCODE_UJ_TYPE_JAL);
+    }
 
     default:
         throw std::invalid_argument("Unsupported instruction: " + inst);
     }
 }
 
-
-
 static InstructionInfo instruction_map(const std::string &inst)
 {
 
-static const std::unordered_map<std::string, InstructionInfo> instruction_lookup = {
+    static const std::unordered_map<std::string, InstructionInfo> instruction_lookup = {
         {"add", {RISCV_CONSTANTS::INSTRUCTIONS::ADD, 3}},
         {"sub", {RISCV_CONSTANTS::INSTRUCTIONS::SUB, 3}},
         {"and", {RISCV_CONSTANTS::INSTRUCTIONS::AND, 3}},
@@ -616,8 +614,7 @@ static const std::unordered_map<std::string, InstructionInfo> instruction_lookup
         {"jalr", {RISCV_CONSTANTS::INSTRUCTIONS::JALR, 2}},
         {"lui", {RISCV_CONSTANTS::INSTRUCTIONS::LUI, 2}},
         {"auipc", {RISCV_CONSTANTS::INSTRUCTIONS::AUIPC, 2}},
-        {"jal", {RISCV_CONSTANTS::INSTRUCTIONS::JAL, 2}}
-    };
+        {"jal", {RISCV_CONSTANTS::INSTRUCTIONS::JAL, 2}}};
     auto it = instruction_lookup.find(inst);
     if (it != instruction_lookup.end())
     {
