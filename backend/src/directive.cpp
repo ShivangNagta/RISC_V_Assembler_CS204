@@ -24,7 +24,7 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
                 }
                 address += 1;
                 
-                // Skip commas between values
+                
                 char comma;
                 iss >> comma;
             }
@@ -38,7 +38,7 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
                 }
                 address += 2;
                 
-                // Skip commas between values
+                
                 char comma;
                 iss >> comma;
             }
@@ -53,7 +53,7 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
                 }
                 address += 4;
                 
-                // Skip commas between values
+               
                 char comma;
                 iss >> comma;
             }
@@ -68,7 +68,7 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
                 }
                 address += 8;
                 
-                // Skip commas between values
+                
                 char comma;
                 iss >> comma;
             }
@@ -77,7 +77,7 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
             std::string str;
             std::getline(iss, str);
             
-            // Extract string between quotes
+           
             size_t first = str.find('"');
             size_t last = str.rfind('"');
             
@@ -88,10 +88,10 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
                     for (char c : str) {
                         memory.storeData(address++, static_cast<uint8_t>(c));
                     }
-                    memory.storeData(address++, 0);  // Null terminator
+                    memory.storeData(address++, 0);  
                 } else {
-                    // Just update address in first pass
-                    address += str.length() + 1;  // +1 for null terminator
+                   
+                    address += str.length() + 1;  
                 }
             }
         }

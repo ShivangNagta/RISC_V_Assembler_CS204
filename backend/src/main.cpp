@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        // Validate input file existence
         const string input_path = argv[1];
         if(!fs::exists(input_path)) {
             cerr << "Error: Input file '" << input_path 

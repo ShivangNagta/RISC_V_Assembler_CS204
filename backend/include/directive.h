@@ -1,3 +1,8 @@
+/*
+Handles the assembler directives: .text, .data,
+.byte, .half, .word, .dword, .asciz.
+*/
+
 #pragma once
 #include "memory.h"
 #include <string>

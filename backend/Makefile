@@ -4,7 +4,7 @@ all:
 	src/InstructionTypes/uj_instruction.cpp src/InstructionTypes/s_instruction.cpp src/InstructionTypes/sb_instruction.cpp src/memory.cpp -O3 -o main
 
 run: 
-	./main ./input/input.asm ./input/output.mc
+	./main ./input/input.asm ./output/output.mc
 
 clean:
 	rm ./main
