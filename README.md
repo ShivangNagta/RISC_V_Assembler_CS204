@@ -13,13 +13,15 @@ RISC_V_Assembler/
 │   │   └── input.asm
 │   ├── output/     # Generated machine code
 │   │   └── output.mc
+│   ├── server/     # Node.js server for running backend
+│   │   └── server.js
 │   └── Makefile    # Build configuration
 └── README.md
 ```
 
 ## Features
-- Supports RISC-V RV32I and RV64I instruction sets
-- Handles all major instruction types (R, I, S, B, U, J)
+- Supports RISC-V 32 instructions.
+- Handles all major instruction types (R, I, S, SB, U, UJ)
 - Supports labels and symbolic references
 - Generates detailed machine code output with comments
 
@@ -28,9 +30,27 @@ RISC_V_Assembler/
 ### Prerequisites
 - C++ compiler with C++17 support
 - Make build system
-- Node.js and npm (for frontend development)
+- Node.js and npm (for frontend and backend development)
 
-### Building the Backend
+### Running the Backend
+There are two ways to run the backend:
+
+#### Option 1: Using Node.js Server
+Navigate to the backend server directory:
+```sh
+cd backend/server
+```
+Install dependencies:
+```sh
+npm install
+```
+Run the Node.js server:
+```sh
+node server.js
+```
+This will allow you to run the assembler through the browser UI. Once the server is running, proceed to the [Frontend](#frontend-in-development) setup to access the UI.
+
+#### Option 2: Using Make (Terminal Mode)
 Navigate to the backend directory:
 ```sh
 cd backend
@@ -39,9 +59,9 @@ Build the project:
 ```sh
 make
 ```
+Place your RISC-V assembly code in `backend/input/input.asm` before running the assembler.
 
-### Running the Assembler
-Place your RISC-V assembly code in `backend/input/input.asm` and run the assembler:
+Run the assembler:
 ```sh
 make run
 ```
@@ -78,4 +98,18 @@ The frontend is being developed using Vite and React. Once completed, it will pr
 - Visualizing the assembly process
 - Displaying register values and memory state
 - Step-by-step execution
+
+### Setting Up the Frontend for Development
+Navigate to the frontend directory:
+```sh
+cd frontend
+```
+Install dependencies:
+```sh
+npm install
+```
+Start the development server:
+```sh
+npm run dev
+```
 
