@@ -16,17 +16,18 @@ void Memory::storeData(uint32_t address, uint8_t value) {
 // Store multiple bytes (for .half, .word, .dword)
 void Memory::storeDataBytes(uint32_t address, const std::vector<uint8_t>& values) {
     for (size_t i = 0; i < values.size(); i++) {
-        dataSegment[address + i] = values[i];
+        storeData(address + i, values[i]);
     }
 }
 
 // Store a null-terminated string (.asciz)
 void Memory::storeString(uint32_t address, const std::string& str) {
     for (size_t i = 0; i < str.size(); i++) {
-        dataSegment[address + i] = static_cast<uint8_t>(str[i]);
+        storeData(address + i, static_cast<uint8_t>(str[i]));
     }
-    dataSegment[address + str.size()] = 0; // Null terminator
+    storeData(address + str.size(), 0); // Null terminator
 }
+
 
 // Fetch an instruction from memory (returns 0 if not found)
 uint32_t Memory::fetchInstruction(uint32_t address) const {

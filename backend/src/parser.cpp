@@ -51,59 +51,72 @@ std::tuple<std::string, std::vector<std::string>> Parser::extractInstruction(con
 }
 
 void Parser::parse(std::string line, uint32_t &address,
-                   SymbolTable &symbols, bool firstPass,
-                   std::ofstream *out)
+    SymbolTable &symbols, bool firstPass,
+    std::ofstream *out)
 {
-    // Remove comments
-    line = line.substr(0, line.find('#'));
+// Remove comments
+size_t commentPos = line.find('#');
+if (commentPos != std::string::npos) {
+line = line.substr(0, commentPos);
+}
 
-    // Trim leading and trailing whitespace
-    size_t start = line.find_first_not_of(" \t");
-    if (start == std::string::npos)
-        return; // Line is empty, so exit
+// Trim leading and trailing whitespace
+size_t start = line.find_first_not_of(" \t");
+if (start == std::string::npos)
+return; // Line is empty, so exit
 
-    line = line.substr(start);
-    size_t end = line.find_last_not_of(" \t");
-    if (end != std::string::npos)
-    {
-        line = line.substr(0, end + 1);
-    }
+line = line.substr(start);
+size_t end = line.find_last_not_of(" \t");
+if (end != std::string::npos) {
+line = line.substr(0, end + 1);
+}
 
-    // Label handling
-    size_t colonPos = line.find(':');
-    if (colonPos != std::string::npos)
-    {
-        std::string label = line.substr(0, colonPos);
-        symbols.addLabel(label, address);
-        line = line.substr(colonPos + 1);
-    }
+// Label handling
+size_t colonPos = line.find(':');
+if (colonPos != std::string::npos) {
+std::string label = line.substr(0, colonPos);
+if (firstPass) {
+symbols.addLabel(label, address);
+}
 
-    // If the remaining line is empty after label processing, exit
-    if (line.empty())
-        return;
+// Check if there's more content after the label
+if (colonPos + 1 < line.length()) {
+line = line.substr(colonPos + 1);
+// Trim again after removing label
+start = line.find_first_not_of(" \t");
+if (start == std::string::npos)
+ return; // Rest of line is empty
+line = line.substr(start);
+} else {
+return; // No more content after label
+}
+}
 
-    // Directive processing
-    if (directives.isDirective(line))
-    {
-        directives.process(line, address, firstPass);
-        return;
-    }
+// Directive processing
+if (directives.isDirective(line)) {
+directives.process(line, address, firstPass);
+return;
+}
 
-    // Instruction processing
-    if (!firstPass && out != nullptr)
-    { // Check if out is valid
-        auto [op, operands] = extractInstruction(line);
-        if (!op.empty())
-        { // Ensure we don't process empty instructions
-            auto inst = InstructionFactory::create(op, operands, symbols, address);
-            if (inst)
-            {
-                *out << "0x" << std::hex << address << " 0x"
-                     << std::setw(8) << std::setfill('0')
-                     << inst->generate_machine_code() << " , " << line
-                     << " # " << inst->generate_comment() << "\n";
-            }
-        }
-    }
-    address += 4; // Advance PC
+// Instruction processing
+auto [op, operands] = extractInstruction(line);
+if (op.empty()) return; // Skip empty instructions
+
+if (!firstPass && out != nullptr) {
+auto inst = InstructionFactory::create(op, operands, symbols, address);
+if (inst) {
+uint32_t machineCode = inst->generate_machine_code();
+
+// Store instruction in memory
+memory.storeInstruction(address, machineCode);
+
+// Write to output file
+*out << "0x" << std::hex << std::setw(8) << std::setfill('0') << address 
+  << " 0x" << std::setw(8) << std::setfill('0') << machineCode 
+  << " , " << line << " # " << inst->generate_comment() << "\n";
+}
+}
+
+// Always advance PC for instructions
+address += 4;
 }

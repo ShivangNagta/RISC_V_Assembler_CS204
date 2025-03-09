@@ -8,14 +8,26 @@ void Assembler::assemble(const std::string& input, const std::string& output) {
 
     // Second pass: Generate machine code
     fileIO.writeMachineCode(output, [&](std::ofstream& out) {
-        uint32_t textAddr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
-        uint32_t dataAddr = RISCV_CONSTANTS::DATA_SEGMENT_START;
+        // Initialize segment addresses
+        uint32_t addr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
+        bool inDataSegment = false;
 
         fileIO.readAssembly(input, [&](const std::string& line, uint32_t&) {
-            parser.parse(line, (line.find(".data") != std::string::npos) ? dataAddr : textAddr, symbols, false, &out);
+            // Check if we're switching segments
+            if (line.find(".data") != std::string::npos) {
+                inDataSegment = true;
+                addr = RISCV_CONSTANTS::DATA_SEGMENT_START;
+            } else if (line.find(".text") != std::string::npos) {
+                inDataSegment = false;
+                addr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
+            }
+            
+            // Parse with the correct address
+            parser.parse(line, addr, symbols, false, &out);
         });
 
-        // ✅ After machine code is written, store data memory to a separate file
+        // After machine code is written, store memory to a separate file
         fileIO.writeMemoryDump(output + "_memory.txt", memory);
     });
 }
+

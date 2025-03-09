@@ -19,49 +19,84 @@ void DirectiveHandler::process(const std::string& line, uint32_t& address, bool 
         if (directive == ".byte") {
             int value;
             while (iss >> value) {
-                memory.storeData(address, static_cast<uint8_t>(value));
+                if (!firstPass) {
+                    memory.storeData(address, static_cast<uint8_t>(value));
+                }
                 address += 1;
+                
+                // Skip commas between values
+                char comma;
+                iss >> comma;
             }
         }
         else if (directive == ".half") {
             int value;
             while (iss >> value) {
-                memory.storeData(address, static_cast<uint16_t>(value) & 0xFF);
-                memory.storeData(address + 1, (static_cast<uint16_t>(value) >> 8) & 0xFF);
+                if (!firstPass) {
+                    memory.storeData(address, static_cast<uint8_t>(value & 0xFF));
+                    memory.storeData(address + 1, static_cast<uint8_t>((value >> 8) & 0xFF));
+                }
                 address += 2;
+                
+                // Skip commas between values
+                char comma;
+                iss >> comma;
             }
         }
         else if (directive == ".word") {
             int value;
             while (iss >> value) {
-                for (int i = 0; i < 4; i++) {
-                    memory.storeData(address + i, (value >> (i * 8)) & 0xFF);
+                if (!firstPass) {
+                    for (int i = 0; i < 4; i++) {
+                        memory.storeData(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+                    }
                 }
                 address += 4;
+                
+                // Skip commas between values
+                char comma;
+                iss >> comma;
             }
         }
         else if (directive == ".dword") {
             long long value;
             while (iss >> value) {
-                for (int i = 0; i < 8; i++) {
-                    memory.storeData(address + i, (value >> (i * 8)) & 0xFF);
+                if (!firstPass) {
+                    for (int i = 0; i < 8; i++) {
+                        memory.storeData(address + i, static_cast<uint8_t>((value >> (i * 8)) & 0xFF));
+                    }
                 }
                 address += 8;
+                
+                // Skip commas between values
+                char comma;
+                iss >> comma;
             }
         }
         else if (directive == ".asciz") {
             std::string str;
             std::getline(iss, str);
-            str = str.substr(str.find('"') + 1, str.rfind('"') - 1);
-            for (char c : str) {
-                memory.storeData(address++, c);
+            
+            // Extract string between quotes
+            size_t first = str.find('"');
+            size_t last = str.rfind('"');
+            
+            if (first != std::string::npos && last != std::string::npos && first != last) {
+                str = str.substr(first + 1, last - first - 1);
+                
+                if (!firstPass) {
+                    for (char c : str) {
+                        memory.storeData(address++, static_cast<uint8_t>(c));
+                    }
+                    memory.storeData(address++, 0);  // Null terminator
+                } else {
+                    // Just update address in first pass
+                    address += str.length() + 1;  // +1 for null terminator
+                }
             }
-            memory.storeData(address++, 0);  // Null terminator
         }
     }
 }
-
-
 
 bool DirectiveHandler::isDirective(const std::string& line) {
     return line[0] == '.';
