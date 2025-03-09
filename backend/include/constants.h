@@ -39,10 +39,10 @@ namespace RISCV_CONSTANTS {
     constexpr uint32_t OPCODE_I_TYPE_LOAD = 0b0000011;
     constexpr uint32_t OPCODE_S_TYPE = 0b0100011;
     constexpr uint32_t OPCODE_SB_TYPE = 0b1100011;
-    constexpr uint32_t OPCODE_J_TYPE_JAL = 0b1101111;
     constexpr uint32_t OPCODE_I_TYPE_JALR = 0b1100111;
-    constexpr uint32_t OPCODE_UJ_TYPE_LUI = 0b0110111;
-    constexpr uint32_t OPCODE_UJ_TYPE_AUIPC = 0b0010111;
+    constexpr uint32_t OPCODE_U_TYPE_LUI = 0b0110111;
+    constexpr uint32_t OPCODE_U_TYPE_AUIPC = 0b0010111;
+    constexpr uint32_t OPCODE_UJ_TYPE_JAL = 0b1101111;
     // constexpr uint32_t OPCODE_I_TYPE_ENV = 0b1110011;
 
 
@@ -88,6 +88,8 @@ namespace RISCV_CONSTANTS {
     constexpr uint32_t FUNCT3_LH = 0b001;
     constexpr uint32_t FUNCT3_LW = 0b010;
     constexpr uint32_t FUNCT3_LD = 0b011;
+    // JALR function code
+    constexpr uint32_t FUNCT3_JALR = 0b000; // Jump And Link Register
 
     //sb, sw, sd, sh
     // Store function codes
