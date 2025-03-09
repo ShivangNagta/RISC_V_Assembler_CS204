@@ -122,7 +122,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         std::cout << operands[i] << std::endl;
     }
     // Helper function to check if an operand is likely a register reference
-    auto isLikelyRegister = [](const std::string& op) -> bool {
+    auto isLikelyRegister = [&symbols](const std::string& op) -> bool {
         if (op.empty()) return false;
         // If it contains parentheses, it's likely a memory reference, not just a register
         if (op.find('(') != std::string::npos) return false;
@@ -130,7 +130,15 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         if (isdigit(op[0]) || op[0] == '-' || op[0] == '+') return false;
         // If it starts with "0x", it's likely a hex value
         if (op.size() >= 2 && op.substr(0, 2) == "0x") return false;
+        // If it's a known label in the symbol table, it's not a register
+    if (symbols.labelExists(op)) return false;
+    
+    // If it's one of the common RISC-V register prefixes, it's likely a register
+    if (op[0] == 'x' || op[0] == 'a' || op[0] == 't' || op[0] == 's' || 
+        op == "ra" || op == "sp" || op == "gp" || op == "tp" || op == "fp" || op == "zero") {
         return true;
+    }
+        return false;
     };
     // Validate registers before processing any instruction
     for (const auto& operand : operands) {
