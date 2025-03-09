@@ -7,6 +7,7 @@ We will be using Factory Design Pattern to create the instructions by directly t
 
 #include <cstdint>
 #include <vector>
+#include <string>
 
 class Instruction {
 protected:
@@ -14,5 +15,7 @@ protected:
 public:
     Instruction (uint32_t op) : op(op) {};
     virtual uint32_t generate_machine_code() const = 0;
+    virtual std::string generate_comment() const = 0;
     virtual ~Instruction() = default;
+
 };

@@ -86,7 +86,8 @@ auto inst = InstructionFactory::create(op, operands, symbols, address);
 if (inst) {
  *out << "0x" << std::hex << address << " 0x" 
       << std::setw(8) << std::setfill('0') 
-      << inst->generate_machine_code() << " , " << line << "\n";
+      << inst->generate_machine_code() << " , " << line
+      << " # " << inst->generate_comment() << "\n";
 }
 }
 }

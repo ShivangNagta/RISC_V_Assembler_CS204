@@ -15,4 +15,6 @@ public:
     : Instruction(op), rd(rd), rs1(rs1), imm(imm), funct3(funct3) {};
 
     uint32_t generate_machine_code () const override;
+    std::string generate_comment() const override;
+
 };
