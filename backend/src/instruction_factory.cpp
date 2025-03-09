@@ -249,7 +249,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         else
         {
             // Label provided - look up in symbol table
-            offset = symbols.at(operands[2]) - address;
+            offset = symbols.getAddress(operands[2]) - address;
         }
 
         return std::make_unique<BInstruction>(offset,
@@ -269,7 +269,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         }
         else
         {
-            offset = symbols.at(operands[2]) - address;
+            offset = symbols.getAddress(operands[2]) - address;
         }
 
         return std::make_unique<BInstruction>(offset,
@@ -289,7 +289,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         }
         else
         {
-            offset = symbols.at(operands[2]) - address;
+            offset = symbols.getAddress(operands[2]) - address;
         }
 
         return std::make_unique<BInstruction>(offset,
@@ -309,7 +309,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         }
         else
         {
-            offset = symbols.at(operands[2]) - address;
+            offset = symbols.getAddress(operands[2]) - address;
         }
 
         return std::make_unique<BInstruction>(offset,
@@ -331,7 +331,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         else
         {
             // Handle symbol if needed
-            imm = symbols.at(operands[1]);
+            imm = symbols.getAddress(operands[1]);
         }
 
         return std::make_unique<UInstruction>(imm,
@@ -350,7 +350,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         else
         {
             // Handle symbol if needed
-            imm = symbols.at(operands[1]);
+            imm = symbols.getAddress(operands[1]);
         }
 
         return std::make_unique<UInstruction>(imm,
@@ -371,7 +371,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         else
         {
             // Label provided - calculate offset relative to current address
-            offset = symbols.at(operands[1]) - address;
+            offset = symbols.getAddress(operands[1]) - address;
         }
 
         return std::make_unique<UJInstruction>(offset,
