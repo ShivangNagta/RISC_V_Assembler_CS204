@@ -1,70 +1,68 @@
-// DirectiveHandler.cpp
 #include "directive.h"
-#include "constants.h"
-#include <iostream>
 #include <sstream>
+#include <iostream>
 
-bool DirectiveHandler::isDirective(const std::string& line) {
-    return line[0] == '.';
-}
+void DirectiveHandler::process(const std::string& line, uint32_t& address, bool firstPass) {
+    std::istringstream iss(line);
+    std::string directive;
+    iss >> directive;
 
-void DirectiveHandler::process(const std::string& directive, uint32_t& address,
-                               std::ofstream& out, bool firstPass) {
     if (directive == ".text") {
         currentSegment = Segment::TEXT;
-        address = RISCV_CONSTANTS::TEXT_SEGMENT_START;
+        address = 0x00000000;
     } 
     else if (directive == ".data") {
         currentSegment = Segment::DATA;
-        address = RISCV_CONSTANTS::DATA_SEGMENT_START;
-    } 
-    else if (directive.rfind(".word", 0) == 0) { // Handle .word
-        if (!firstPass) {
-            uint32_t value = parseImmediate(directive.substr(5));
-            out << std::hex << address << " 0x" << value << "\n";
-        }
-        address += 4;
+        address = 0x10000000;
     }
-    else if (directive.rfind(".byte", 0) == 0) { // Handle .byte
-        if (!firstPass) {
-            uint8_t value = static_cast<uint8_t>(parseImmediate(directive.substr(5)));
-            out << std::hex << address << " 0x" << static_cast<int>(value) << "\n";
-        }
-        address += 1;
-    }
-    else if (directive.rfind(".half", 0) == 0) { // Handle .half
-        if (!firstPass) {
-            uint16_t value = static_cast<uint16_t>(parseImmediate(directive.substr(5)));
-            out << std::hex << address << " 0x" << value << "\n";
-        }
-        address += 2;
-    }
-    else if (directive.rfind(".dword", 0) == 0) { // Handle .dword
-        if (!firstPass) {
-            uint64_t value = static_cast<uint64_t>(parseImmediate(directive.substr(6)));
-            out << std::hex << address << " 0x" << value << "\n";
-        }
-        address += 8;
-    }
-    else if (directive.rfind(".asciz", 0) == 0) { // Handle .asciz (null-terminated string)
-        if (!firstPass) {
-            std::string str = directive.substr(6); // Extract string part
-            if (!str.empty() && str.front() == '"' && str.back() == '"') {
-                str = str.substr(1, str.length() - 2); // Remove surrounding quotes
-            }
-            for (char c : str) {
-                out << std::hex << address << " 0x" << static_cast<int>(c) << "\n";
+    else if (currentSegment == Segment::DATA) {
+        if (directive == ".byte") {
+            int value;
+            while (iss >> value) {
+                memory.storeData(address, static_cast<uint8_t>(value));
                 address += 1;
             }
-            out << std::hex << address << " 0x0\n"; // Null terminator
-            address += 1;
+        }
+        else if (directive == ".half") {
+            int value;
+            while (iss >> value) {
+                memory.storeData(address, static_cast<uint16_t>(value) & 0xFF);
+                memory.storeData(address + 1, (static_cast<uint16_t>(value) >> 8) & 0xFF);
+                address += 2;
+            }
+        }
+        else if (directive == ".word") {
+            int value;
+            while (iss >> value) {
+                for (int i = 0; i < 4; i++) {
+                    memory.storeData(address + i, (value >> (i * 8)) & 0xFF);
+                }
+                address += 4;
+            }
+        }
+        else if (directive == ".dword") {
+            long long value;
+            while (iss >> value) {
+                for (int i = 0; i < 8; i++) {
+                    memory.storeData(address + i, (value >> (i * 8)) & 0xFF);
+                }
+                address += 8;
+            }
+        }
+        else if (directive == ".asciz") {
+            std::string str;
+            std::getline(iss, str);
+            str = str.substr(str.find('"') + 1, str.rfind('"') - 1);
+            for (char c : str) {
+                memory.storeData(address++, c);
+            }
+            memory.storeData(address++, 0);  // Null terminator
         }
     }
 }
 
-uint32_t DirectiveHandler::parseImmediate(const std::string& str) {
-    std::stringstream ss(str);
-    uint32_t value;
-    ss >> value;
-    return value;
+
+
+bool DirectiveHandler::isDirective(const std::string& line) {
+    return line[0] == '.';
 }

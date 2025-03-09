@@ -1,6 +1,6 @@
-// FileIO.cpp
 #include "io.h"
 #include <stdexcept>
+#include "memory.h"
 
 void FileIO::readAssembly(const std::string& filename, 
                          std::function<void(const std::string&, uint32_t&)> processor) {
@@ -20,4 +20,13 @@ void FileIO::writeMachineCode(const std::string& filename,
     std::ofstream out(filename);
     if (!out) throw std::runtime_error("Cannot create file: " + filename);
     generator(out);
+}
+
+void FileIO::writeMemoryDump(const std::string& filename, const Memory& memory) {
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot create memory dump file: " + filename);
+    
+    for (const auto& [address, value] : memory.getDataMemory()) {
+        out << "0x" << std::hex << address << " 0x" << static_cast<int>(value) << "\n";
+    }
 }
