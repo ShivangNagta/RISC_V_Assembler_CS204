@@ -27,61 +27,82 @@ export default function App() {
             .map(line => {
                 const parts = line.trim().split(/\s+/);
                 if (parts.length === 2) {
-                    return `<span class="text-gray-500">${parts[0]}</span> <span class="text-green-400">${parts[1]}</span>`;
+                    return `<span class="text-green-400">${parts[0]}</span> <span class="text-yellow-300">${parts[1]}</span>`;
                 }
-                return `<span class="text-green-400">${line}</span>`;
+                return `<span class="text-yellow-300">${line}</span>`;
             })
             .join("<br>");
     };
 
     return (
-        <div className="h-screen flex flex-col bg-black text-white">
-            {/* Title */}
-            <h1 className="text-2xl font-semibold text-center py-4 text-gray-300">RISC-V Assembler</h1>
+        <div className="h-screen flex flex-col bg-gray-900 text-green-400 font-mono p-4">
+            {/* Pixel Art Title */}
+            <div className="text-center mb-4">
+                <h1 className="text-2xl font-bold tracking-widest text-green-400 pb-2">
+                    RISC-V ASSEMBLER
+                </h1>
+                <div className="flex justify-center">
+                    <div className="w-64 h-1 bg-green-400"></div>
+                </div>
+            </div>
 
             {/* Input/Output Windows */}
-            <div className="flex flex-grow w-full max-w-7xl mx-auto border border-gray-700 rounded-lg overflow-hidden">
+            <div className="flex flex-grow w-full max-w-6xl mx-auto">
                 {/* Left Panel - Assembly Code Input */}
-                <div className="w-1/3 flex flex-col p-3">
-                    <h2 className="text-sm font-medium text-gray-400">Assembly Code</h2>
+                <div className="w-1/3 flex flex-col mr-4">
+                    <div className="bg-gray-800 p-1 mb-1 border-b-4 border-l-4 border-r-4 border-t-4 border-green-500">
+                        <h2 className="text-sm font-bold px-2 py-1 bg-green-500 text-gray-900 inline-block">ASSEMBLY</h2>
+                    </div>
                     <textarea
-                        className="w-full flex-1 p-3 mt-1 bg-gray-900 text-white border border-gray-700 rounded-md outline-none resize-none font-mono text-sm"
+                        className="w-full flex-1 p-3 bg-gray-800 text-green-300 border-b-4 border-l-4 border-r-4 border-green-500 outline-none resize-none text-sm"
                         placeholder="Write your assembly code here..."
                         value={assemblyCode}
                         onChange={(e) => setAssemblyCode(e.target.value)}
+                        style={{ fontFamily: "monospace", lineHeight: "1.5" }}
                     />
                 </div>
 
                 {/* Right Panel - Machine Code Output */}
-                <div className="w-2/3 flex flex-col p-3 border-l border-gray-700">
-                    <h2 className="text-sm font-medium text-gray-400">Machine Code</h2>
+                <div className="w-2/3 flex flex-col">
+                    <div className="bg-gray-800 p-1 mb-1 border-b-4 border-l-4 border-r-4 border-t-4 border-green-500">
+                        <h2 className="text-sm font-bold px-2 py-1 bg-green-500 text-gray-900 inline-block">MACHINE CODE</h2>
+                    </div>
                     <div
-                        className="w-full flex-1 p-3 mt-1 bg-gray-900 text-green-400 border border-gray-700 rounded-md font-mono text-sm overflow-y-auto"
-                        style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+                        className="w-full flex-1 p-3 bg-gray-800 text-green-300 border-b-4 border-l-4 border-r-4 border-green-500 overflow-y-auto"
+                        style={{ 
+                            fontFamily: "monospace", 
+                            lineHeight: "1.5", 
+                            whiteSpace: "pre-wrap", 
+                            wordBreak: "break-word" 
+                        }}
                         dangerouslySetInnerHTML={{ __html: machineCode }}
                     />
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-3 flex justify-center gap-4">
+            <div className="mt-6 flex justify-center gap-6">
                 <button
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-medium text-sm transition duration-200"
+                    className="px-6 py-2 bg-green-500 hover:bg-green-400 text-gray-900 font-bold border-b-4 border-l-2 border-r-2 border-t-2 border-green-700 hover:border-green-600 transition duration-200"
                     onClick={assembleCode}
                     disabled={loading}
                 >
-                    {loading ? "Assembling..." : "Assemble"}
+                    {loading ? "..." : "ASSEMBLE"}
                 </button>
                 <button
-                    className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-md font-medium text-sm transition duration-200"
+                    className="px-6 py-2 bg-red-500 hover:bg-red-400 text-gray-900 font-bold border-b-4 border-l-2 border-r-2 border-t-2 border-red-700 hover:border-red-600 transition duration-200"
                     onClick={() => { setAssemblyCode(""); setMachineCode(""); }}
                 >
-                    Clear
+                    CLEAR
                 </button>
             </div>
 
             {/* Error Message */}
-            {error && <p className="text-red-500 mt-3 text-center text-sm">{error}</p>}
+            {error && (
+                <div className="mt-4 mx-auto max-w-lg p-2 bg-gray-800 border-2 border-red-500">
+                    <p className="text-red-500 text-center text-sm font-bold">{error}</p>
+                </div>
+            )}
         </div>
     );
 }
