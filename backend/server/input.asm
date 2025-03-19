@@ -1,3 +1,8 @@
+.data
+.byte -129
+sa: .word 1, 2
+.word 10
+
 .text
 _start:
     # Initialize Fibonacci sequence

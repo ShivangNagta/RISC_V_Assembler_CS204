@@ -14,7 +14,8 @@ export default function App() {
             const response = await axios.post("http://localhost:3000/assemble", { code: assemblyCode });
             setMachineCode(formatMachineCode(response.data.machineCode));
         } catch (err) {
-            setError("Error assembling code. Please try again.");
+            console.log(err.response.data.error)
+            setError(`${err.response.data.error}`);
         }
         setLoading(false);
     };
@@ -47,7 +48,7 @@ export default function App() {
             </div>
 
             {/* Input/Output Windows */}
-            <div className="flex flex-grow w-full max-w-6xl mx-auto">
+            <div className="flex flex-grow w-full max-w-7xl mx-auto">
                 {/* Left Panel - Assembly Code Input */}
                 <div className="w-1/3 flex flex-col mr-4">
                     <div className="bg-gray-800 p-1 mb-1 border-b-4 border-l-4 border-r-4 border-t-4 border-green-500">
