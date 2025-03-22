@@ -17,4 +17,10 @@ class SInstruction : public Instruction {
 
     uint32_t generate_machine_code () const override;
     std::string generate_comment() const override;
+    void execute(Cpu& cpu) const override;
+    void memory_update(Cpu& cpu) const override;
+    void writeback(Cpu& cpu) const override;
+
+    uint32_t getOpcode() const;
+    uint32_t getFunct3() const;
 };

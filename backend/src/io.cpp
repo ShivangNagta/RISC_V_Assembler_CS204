@@ -1,5 +1,6 @@
 #include "io.h"
 #include <stdexcept>
+#include <iomanip>
 #include "memory.h"
 
 void FileIO::readAssembly(const std::string& filename, 

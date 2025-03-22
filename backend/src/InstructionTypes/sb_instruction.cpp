@@ -26,3 +26,59 @@ std::string SBInstruction::generate_comment() const {
 
     return ss.str();
 }
+
+uint32_t SBInstruction::getOpcode() const {
+    return op;
+}
+
+uint32_t SBInstruction::getFunct3() const {
+    return funct3;
+}
+
+void SBInstruction::execute(Cpu& cpu) const {
+    int32_t rs1_val = cpu.registers[rs1];
+    int32_t rs2_val = cpu.registers[rs2];
+    bool condition = false;
+    
+    if (funct3 == 0b000) {
+        // beq (branch if equal)
+        condition = (rs1_val == rs2_val);
+        // std::cout << "[Execute] BEQ: x" << rs1 << " == x" << rs2 << "? " 
+        //           << (condition ? "true" : "false") << std::endl;
+    }
+    else if (funct3 == 0b001) {
+        // bne (branch if not equal)
+        condition = (rs1_val != rs2_val);
+        // std::cout << "[Execute] BNE: x" << rs1 << " != x" << rs2 << "? " 
+        //           << (condition ? "true" : "false") << std::endl;
+    }
+    else if (funct3 == 0b100) {
+        // blt (branch if less than)
+        condition = (rs1_val < rs2_val);
+        // std::cout << "[Execute] BLT: x" << rs1 << " < x" << rs2 << "? " 
+        //           << (condition ? "true" : "false") << std::endl;
+    }
+    else if (funct3 == 0b101) {
+        // bge (branch if greater than or equal)
+        condition = (rs1_val >= rs2_val);
+        // std::cout << "[Execute] BGE: x" << rs1 << " >= x" << rs2 << "? " 
+        //           << (condition ? "true" : "false") << std::endl;
+    }
+    
+    // Calculate target address if condition is true
+    if (condition) {
+        cpu.RM = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
+        // std::cout << "[Execute] Branch taken. Target address = " << cpu.RM << std::endl;
+    } 
+    // else {
+        // cpu.RM = cpu.PC + 4;  // Continue to next instruction
+        // std::cout << "[Execute] Branch not taken." << std::endl;
+    // }
+}
+
+void SBInstruction::writeback(Cpu& cpu) const {
+    // Branch instructions update PC based on the condition evaluated in execute
+    cpu.PC = cpu.RM;  // RM contains either PC+4 or branch target from execute stage
+    std::cout << "[Writeback] Branch: Updating PC to " << cpu.PC << std::endl;
+}
+

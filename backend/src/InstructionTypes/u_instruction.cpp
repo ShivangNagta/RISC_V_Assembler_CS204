@@ -21,3 +21,27 @@ std::string UInstruction::generate_comment() const {
 
     return ss.str();
 }
+
+uint32_t UInstruction::getOpcode() const {
+    return op;
+}
+
+void UInstruction::execute(Cpu& cpu) const {
+    if (op == 0b0110111) {
+        // lui (load upper immediate)
+        cpu.RY = imm;
+        // std::cout << "[Execute] LUI: x" << rd << " = " << imm << std::endl;
+    }
+    else if (op == 0b0010111) {
+        // auipc (add upper immediate to pc), minus 4 because of +4 in fetch stage
+        cpu.RY = cpu.PC + imm - 4;
+        // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm 
+        //           << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
+    }
+}
+
+void UInstruction::writeback(Cpu& cpu) const {
+    cpu.registers[rd] = cpu.RY;
+    std::cout << "[Writeback] U-type: Writing " << cpu.RY << " to x" << rd << std::endl;
+    cpu.PC += 4;  // Increment PC
+}

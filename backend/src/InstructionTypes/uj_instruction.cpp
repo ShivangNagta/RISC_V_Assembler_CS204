@@ -25,3 +25,26 @@ std::string UJInstruction::generate_comment() const {
 
     return ss.str();
 }
+
+uint32_t UJInstruction::getOpcode() const {
+    return op;
+}
+
+void UJInstruction::execute(Cpu& cpu) const {
+    // jal (jump and link)
+    // Save return address
+    cpu.RY = cpu.PC; // return address is current PC because +4 in fetch stage
+    
+    // Calculate target address
+    cpu.RM = cpu.PC + imm - 4;  // -4 because of +4 in fetch stage
+    
+    // std::cout << "[Execute] JAL: Return address = " << cpu.RY 
+    //           << ", Target address = " << cpu.RM << std::endl;
+}
+
+void UJInstruction::writeback(Cpu& cpu) const {
+    cpu.registers[rd] = cpu.PC + 4;  // Store return address
+    cpu.PC = cpu.RM;  // Jump to target address
+    std::cout << "[Writeback] JAL: Writing return address " << cpu.registers[rd] 
+              << " to x" << rd << ", jumping to " << cpu.PC << std::endl;
+}

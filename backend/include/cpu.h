@@ -4,23 +4,28 @@
 #include <vector>
 #include <instruction.h>
 #include <unordered_map>
+#include <memory>
 
 enum Step { FETCH, DECODE, EXECUTE, MEMORY, WRITEBACK };
+
+class Instruction;
 
 class Cpu {
 public:
     uint32_t PC = 0x0;
     uint32_t registers[32] = {0};
-    uint32_t PC;          
+    // uint32_t PC;          
     uint32_t IR;         
     uint32_t RM;          
-    uint32_t RY;          
+    int32_t RY;          
     uint64_t clock;        
    
     std::unordered_map<uint32_t, uint32_t> instructionMemory; 
     std::unordered_map<uint32_t, uint8_t> dataMemory;
     std::unordered_map<uint32_t, uint8_t> heapMemory;
     std::unordered_map<uint32_t, uint8_t> stackMemory;
+
+    std::unique_ptr<Instruction> currentInstruction;
 
     Cpu();
 
