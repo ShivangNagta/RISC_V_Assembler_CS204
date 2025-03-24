@@ -6,9 +6,9 @@
 
 Cpu cpu;
 Memory memory;
-Assembler assembler;
 
 void assembleAndOutput() {
+    Assembler assembler;
     std::string jsonInput, line;
     
 

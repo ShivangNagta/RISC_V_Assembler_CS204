@@ -9,13 +9,13 @@ Handles the assembler directives: .text, .data,
 #include <cstdint>
 #include <sstream>
 
+extern Memory memory;
+
 class DirectiveHandler {
     enum class Segment { TEXT, DATA };
     Segment currentSegment = Segment::TEXT;
-    Memory& memory; 
 
 public:
-    DirectiveHandler(Memory& mem) : memory(mem) {}  
 
     void process(const std::string& line, uint32_t& address, bool firstPass);
     bool isInByteRange(int value);

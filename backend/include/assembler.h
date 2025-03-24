@@ -9,14 +9,14 @@ Uses two passes to convert the assembly to machine code
 #include "symbol_table.h"
 #include "memory.h"
 
+extern Memory memory;
+
 class Assembler {
-    SymbolTable symbols;
-    Memory memory;  
+    SymbolTable symbols;  
     Parser parser;   
     FileIO fileIO;
     
 public:
-    Assembler() : parser(memory) {} ;
 
     void assemble(const std::string& input);
 };

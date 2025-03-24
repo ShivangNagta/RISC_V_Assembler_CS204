@@ -11,6 +11,8 @@ class Instruction;
 
 enum Step { FETCH, DECODE, EXECUTE, MEMORY, WRITEBACK };
 
+extern Memory memory;
+
 class Cpu {
 public:
     uint32_t PC = 0x0;
@@ -19,8 +21,6 @@ public:
     uint32_t RM;          
     int32_t RY;          
     uint64_t clock;        
-
-    Memory memory;
 
     std::unique_ptr<Instruction> currentInstruction;
 

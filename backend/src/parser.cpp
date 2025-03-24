@@ -43,9 +43,8 @@ std::tuple<std::string, std::vector<std::string>> Parser::extractInstruction(con
 
 void Parser::parse(std::string line, uint32_t &address,
                    SymbolTable &symbols, bool firstPass,
-                   std::map<uint32_t, unique_ptr<Instruction>> &machineCode,
-                   Memory &memory)
-{ // Use Memory instead of std::map
+                   std::map<uint32_t, unique_ptr<Instruction>> &machineCode)
+{ 
 
     size_t commentPos = line.find('#');
     if (commentPos != std::string::npos)
@@ -102,6 +101,7 @@ void Parser::parse(std::string line, uint32_t &address,
         auto inst = InstructionFactory::create(op, operands, symbols, address);
         if (inst)
         {
+            // cout << inst->generate_machine_code() << endl;
             memory.storeInstruction(address, inst->generate_machine_code());
             machineCode[address] = std::move(inst);
         }

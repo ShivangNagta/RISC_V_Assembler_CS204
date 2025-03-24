@@ -14,7 +14,7 @@ void Assembler::assemble(const std::string& input) {
 
     // First pass: Parse labels
     while (std::getline(stream, line)) {
-        parser.parse(line, addr, symbols, true, machineCode, memory);
+        parser.parse(line, addr, symbols, true, machineCode);
     }
     // Reset stream for second pass
     stream.clear();
@@ -30,7 +30,7 @@ void Assembler::assemble(const std::string& input) {
             inDataSegment = false;
             addr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
         }
-        parser.parse(line, addr, symbols, false, machineCode, memory);
+        parser.parse(line, addr, symbols, false, machineCode);
     }
 
     // Print JSON output
@@ -52,5 +52,6 @@ void Assembler::assemble(const std::string& input) {
         first = false;
     }
     std::cout << "} }" << std::endl;
+
 }
 

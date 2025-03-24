@@ -18,6 +18,7 @@ Cpu::Cpu() : PC(0), IR(0), RM(0), RY(0), clock(0)
 
 void Cpu::fetch()
 {
+    std::cout << memory.instructionMemory[0] << std::endl;
     if (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
     {
         std::cout << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
@@ -50,6 +51,15 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
     uint32_t rs1 = (instr >> 15) & 0x1F;
     uint32_t rs2 = (instr >> 20) & 0x1F;
     uint32_t funct7 = (instr >> 25) & 0x7F;
+
+    std::cout << "Instruction: 0x" << std::hex << instr << std::dec << "\n";
+    std::cout << "Opcode: " << opcode << "\n";
+    std::cout << "rd: " << rd << "\n";
+    std::cout << "funct3: " << funct3 << "\n";
+    std::cout << "rs1: " << rs1 << "\n";
+    std::cout << "rs2: " << rs2 << "\n";
+    std::cout << "funct7: " << funct7 << "\n";
+
 
     // Decode based on opcode
     switch (opcode) {
