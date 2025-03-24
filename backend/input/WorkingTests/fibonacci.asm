@@ -1,3 +1,6 @@
+.data
+ hello: .word 10, 20
+
 .text
 
 _start:

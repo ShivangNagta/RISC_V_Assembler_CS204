@@ -2,28 +2,25 @@
 
 #include <stdint.h>
 #include <vector>
-#include <instruction.h>
+#include "instruction.h"
 #include <unordered_map>
 #include <memory>
-
-enum Step { FETCH, DECODE, EXECUTE, MEMORY, WRITEBACK };
+#include "memory.h"
 
 class Instruction;
+
+enum Step { FETCH, DECODE, EXECUTE, MEMORY, WRITEBACK };
 
 class Cpu {
 public:
     uint32_t PC = 0x0;
-    uint32_t registers[32] = {0};
-    // uint32_t PC;          
+    uint32_t registers[32] = {0};       
     uint32_t IR;         
     uint32_t RM;          
     int32_t RY;          
     uint64_t clock;        
-   
-    std::unordered_map<uint32_t, uint32_t> instructionMemory; 
-    std::unordered_map<uint32_t, uint8_t> dataMemory;
-    std::unordered_map<uint32_t, uint8_t> heapMemory;
-    std::unordered_map<uint32_t, uint8_t> stackMemory;
+
+    Memory memory;
 
     std::unique_ptr<Instruction> currentInstruction;
 
@@ -40,5 +37,9 @@ public:
 
     // Executes entire machine code in a single go
     void run();
+
+    void dumpRegisters();
+    std::unique_ptr<Instruction> decodeInstruction(uint32_t instr);
+    int32_t signExtend(uint32_t value, uint32_t bits);
 
 };

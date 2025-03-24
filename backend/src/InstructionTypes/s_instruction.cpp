@@ -65,12 +65,13 @@ void SInstruction::execute(Cpu& cpu) const {
 }
 
 void SInstruction::memory_update(Cpu& cpu) const {
+    Memory memory;
     uint32_t addr = cpu.RM;  // Address calculated in execute stage
     int32_t value = cpu.RY;  // Value to store (from rs2)
     
     // Perform the store based on funct3
     if (funct3 == 0b000) {  // sb (store byte)
-        cpu.dataMemory[addr] = value & 0xFF;
+        memory.dataMemory[addr] = value & 0xFF;
         std::cout << "[Memory] SB: Stored byte " << (value & 0xFF) 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -81,8 +82,8 @@ void SInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        cpu.dataMemory[addr] = value & 0xFF;
-        cpu.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        memory.dataMemory[addr] = value & 0xFF;
+        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
         std::cout << "[Memory] SH: Stored halfword " << (value & 0xFFFF) 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -93,10 +94,10 @@ void SInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        cpu.dataMemory[addr] = value & 0xFF;
-        cpu.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        cpu.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        cpu.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+        memory.dataMemory[addr] = value & 0xFF;
+        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+        memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
         std::cout << "[Memory] SW: Stored word " << value 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -108,15 +109,15 @@ void SInstruction::memory_update(Cpu& cpu) const {
         }
         
         // For simplicity, we'll just store the lower 32 bits
-        cpu.dataMemory[addr] = value & 0xFF;
-        cpu.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        cpu.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        cpu.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+        memory.dataMemory[addr] = value & 0xFF;
+        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+        memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
         // Zero out the upper 32 bits
-        cpu.dataMemory[addr + 4] = 0;
-        cpu.dataMemory[addr + 5] = 0;
-        cpu.dataMemory[addr + 6] = 0;
-        cpu.dataMemory[addr + 7] = 0;
+        memory.dataMemory[addr + 4] = 0;
+        memory.dataMemory[addr + 5] = 0;
+        memory.dataMemory[addr + 6] = 0;
+        memory.dataMemory[addr + 7] = 0;
         std::cout << "[Memory] SD: Stored lower 32 bits " << value 
                   << " to address 0x" << std::hex << addr << std::endl;
     }

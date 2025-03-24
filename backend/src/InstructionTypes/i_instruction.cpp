@@ -92,6 +92,7 @@ void IInstruction::execute(Cpu& cpu) const {
 }
 
 void IInstruction::memory_update(Cpu& cpu) const {
+    Memory memory;
     // Only handle memory operations for load instructions
     if (op != 0b0000011) {
         // For non-load I-format instructions (addi, jalr, etc.), use default behavior
@@ -102,7 +103,7 @@ void IInstruction::memory_update(Cpu& cpu) const {
     uint32_t addr = cpu.RM;  // Address calculated in execute stage
     
     // Check if address is valid
-    if (cpu.dataMemory.find(addr) == cpu.dataMemory.end()) {
+    if (memory.dataMemory.find(addr) == memory.dataMemory.end()) {
         // std::cout << "[Memory] Warning: Address 0x" << std::hex << addr << " not found in memory\n";
         cpu.RY = 0;  // Default to 0 for non-existent memory
         return;
@@ -111,7 +112,7 @@ void IInstruction::memory_update(Cpu& cpu) const {
     // Perform the load based on funct3
     if (funct3 == 0b000) {  // lb (load byte)
         // Sign-extend byte
-        int8_t byte = cpu.dataMemory[addr] & 0xFF;
+        int8_t byte = memory.dataMemory[addr] & 0xFF;
         cpu.RY = static_cast<int32_t>(byte);
         std::cout << "[Memory] LB: Loaded byte " << static_cast<int>(byte) 
                   << " from address 0x" << std::hex << addr << std::endl;
@@ -123,8 +124,8 @@ void IInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        int16_t halfword = (cpu.dataMemory[addr] & 0xFF) | 
-                          ((cpu.dataMemory[addr + 1] & 0xFF) << 8);
+        int16_t halfword = (memory.dataMemory[addr] & 0xFF) | 
+                          ((memory.dataMemory[addr + 1] & 0xFF) << 8);
         cpu.RY = static_cast<int32_t>(halfword);
         std::cout << "[Memory] LH: Loaded halfword " << halfword 
                   << " from address 0x" << std::hex << addr << std::endl;
@@ -136,10 +137,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        int32_t word = (cpu.dataMemory[addr] & 0xFF) | 
-                       ((cpu.dataMemory[addr + 1] & 0xFF) << 8) |
-                       ((cpu.dataMemory[addr + 2] & 0xFF) << 16) |
-                       ((cpu.dataMemory[addr + 3] & 0xFF) << 24);
+        int32_t word = (memory.dataMemory[addr] & 0xFF) | 
+                       ((memory.dataMemory[addr + 1] & 0xFF) << 8) |
+                       ((memory.dataMemory[addr + 2] & 0xFF) << 16) |
+                       ((memory.dataMemory[addr + 3] & 0xFF) << 24);
         cpu.RY = word;
         std::cout << "[Memory] LW: Loaded word " << word 
                   << " from address 0x" << std::hex << addr << std::endl;
@@ -152,10 +153,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
         }
         
         // For simplicity, we'll just load the lower 32 bits
-        int32_t word = (cpu.dataMemory[addr] & 0xFF) | 
-                       ((cpu.dataMemory[addr + 1] & 0xFF) << 8) |
-                       ((cpu.dataMemory[addr + 2] & 0xFF) << 16) |
-                       ((cpu.dataMemory[addr + 3] & 0xFF) << 24);
+        int32_t word = (memory.dataMemory[addr] & 0xFF) | 
+                       ((memory.dataMemory[addr + 1] & 0xFF) << 8) |
+                       ((memory.dataMemory[addr + 2] & 0xFF) << 16) |
+                       ((memory.dataMemory[addr + 3] & 0xFF) << 24);
         cpu.RY = word;
         std::cout << "[Memory] LD: Loaded lower 32 bits " << word 
                   << " from address 0x" << std::hex << addr << std::endl;

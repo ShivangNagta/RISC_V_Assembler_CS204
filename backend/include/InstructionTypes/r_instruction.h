@@ -19,7 +19,7 @@ public:
     void execute(Cpu& cpu) const override;
     void writeback(Cpu& cpu) const override;
 
-    uint32_t getOpcode() const;
-    uint32_t getFunct3() const;
+    uint32_t getOpcode() const override;
+    uint32_t getFunct3() const override;
 
 };

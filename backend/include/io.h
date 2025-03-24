@@ -10,8 +10,5 @@ public:
     void readAssembly(const std::string& filename, 
                      std::function<void(const std::string&, uint32_t&)> processor);
     
-    void writeMachineCode(const std::string& filename, 
-                         std::function<void(std::ofstream&)> generator);
 
-    void writeMemoryDump(const std::string& filename, const Memory& memory); 
 };

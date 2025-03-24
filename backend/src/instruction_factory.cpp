@@ -120,10 +120,6 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                         const SymbolTable &symbols,
                                                         uint32_t address)
 {
-    for (int i = 0; i < operands.size(); ++i)
-    {
-        std::cout << operands[i] << std::endl;
-    }
 
     // Tp check if a string is likely a register name
     auto isLikelyRegister = [&symbols](const std::string &op) -> bool

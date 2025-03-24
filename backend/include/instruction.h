@@ -10,6 +10,9 @@ We will be using Factory Design Pattern to create the instructions by directly t
 #include <string>
 #include <iostream>
 #include "cpu.h"
+#include "memory.h"
+
+class Cpu;
 
 class Instruction {
 protected:
@@ -27,7 +30,10 @@ public:
     }
 
     virtual uint32_t getOpcode() const = 0;
-    // virtual uint32_t getFunct3() const = 0;
+    virtual uint32_t getFunct3() const {
+        
+        return 0; 
+    }
     virtual void writeback(Cpu& cpu) const = 0;
 
 };

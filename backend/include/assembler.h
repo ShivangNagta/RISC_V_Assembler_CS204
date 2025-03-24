@@ -18,6 +18,6 @@ class Assembler {
 public:
     Assembler() : parser(memory) {} ;
 
-    void assemble(const std::string& input, const std::string& output);
+    void assemble(const std::string& input);
 };
 

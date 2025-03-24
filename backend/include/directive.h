@@ -17,6 +17,9 @@ class DirectiveHandler {
 public:
     DirectiveHandler(Memory& mem) : memory(mem) {}  
 
-    bool isDirective(const std::string& line);
     void process(const std::string& line, uint32_t& address, bool firstPass);
+    bool isInByteRange(int value);
+    bool isInHalfWordRange(int value);
+    bool isInWordRange(int value);
+    bool isDirective(const std::string& line);
 };

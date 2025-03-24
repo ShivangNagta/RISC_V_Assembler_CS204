@@ -6,6 +6,7 @@
 #include "InstructionTypes/u_instruction.h"
 #include "InstructionTypes/uj_instruction.h"
 #include <iostream>
+#include "memory"
 
 Cpu::Cpu() : PC(0), IR(0), RM(0), RY(0), clock(0)
 {
@@ -17,12 +18,12 @@ Cpu::Cpu() : PC(0), IR(0), RM(0), RY(0), clock(0)
 
 void Cpu::fetch()
 {
-    if (instructionMemory.find(PC) == instructionMemory.end())
+    if (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
     {
         std::cout << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
         return;
     }
-    IR = instructionMemory[PC];
+    IR = memory.instructionMemory[PC];
     PC += 4;
     std::cout << "[Fetch] PC: 0x" << std::hex << PC
               << " | Instruction: 0x" << IR << std::endl;
@@ -34,13 +35,13 @@ void Cpu::decode()
     std::cout << "[Decode] Decoding instruction: 0x" << std::hex << IR << std::endl;
 }
 
-int32_t signExtend(uint32_t value, uint32_t bits)
+int32_t Cpu::signExtend(uint32_t value, uint32_t bits)
 {
     uint32_t mask = 1U << (bits - 1);
     return (value ^ mask) - mask;
 }
 
-std::unique_ptr<Instruction> decodeInstruction(uint32_t instr)
+std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
 {
     // Extract fields
     uint32_t opcode = instr & 0x7F;
@@ -181,9 +182,20 @@ void Cpu::step()
 
 void Cpu::run()
 {
-    while (instructionMemory.find(PC) != instructionMemory.end())
+    while (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
     {
         step();
     }
     std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
+}
+
+void Cpu::dumpRegisters() {
+    bool first = true;
+    for (int i = 0; i < 32; i++) {
+        if (registers[i] != 0) {
+            if (!first) std::cout << ",";
+            std::cout << "\"x" << i << "\": " << registers[i];
+            first = false;
+        }
+    }
 }
