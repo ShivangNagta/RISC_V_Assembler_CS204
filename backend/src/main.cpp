@@ -49,8 +49,6 @@ void runAndOutput() {
     memory.dumpInstructions();
     std::cout << "}, \"stack\": {";
     memory.dumpStack();
-    std::cout << "}, \"heap\": {";
-    memory.dumpHeap();
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
     std::cout << "} }" << std::endl;
@@ -65,8 +63,6 @@ void stepAndOutput() {
     memory.dumpInstructions();
     std::cout << "}, \"stack\": {";
     memory.dumpStack();
-    std::cout << "}, \"heap\": {";
-    memory.dumpHeap();
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
     std::cout << "} }" << std::endl;
@@ -80,7 +76,7 @@ int main(int argc, char* argv[]) {
             std::string command;
     std::getline(std::cin, command);
         if (command == "assemble") {
-            //{ "input_code": "addi x1, x0, 10\nadd x2, x1, x1" }
+            cpu.reset();
             assembleAndOutput();
         } else if (command == "run") {
             runAndOutput();

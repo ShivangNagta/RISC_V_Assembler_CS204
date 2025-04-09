@@ -20,11 +20,13 @@ public:
     int32_t RY;          
     uint64_t clock;        
 
+    static Step currentStep;
+
     Memory& memory;
 
     std::unique_ptr<Instruction> currentInstruction;
 
-    Cpu(Memory &memory) ;
+    Cpu(Memory &memory);
 
     void fetch();    
     void decode();   
@@ -42,4 +44,5 @@ public:
     std::unique_ptr<Instruction> decodeInstruction(uint32_t instr);
     int32_t signExtend(uint32_t value, uint32_t bits);
 
+    void reset();
 };

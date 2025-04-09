@@ -98,11 +98,8 @@ void Memory::dumpStack() {
     }
 }
 
-void Memory::dumpHeap() {
-    bool first = true;
-    for (const auto& [addr, val] : heapMemory) {
-        if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << addr << "\": " << std::dec << val;
-        first = false;
-    }
+void Memory::reset() {
+    instructionMemory.clear();
+    dataMemory.clear();
+    stackMemory.clear();
 }

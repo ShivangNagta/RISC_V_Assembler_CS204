@@ -8,6 +8,8 @@
 #include <iostream>
 #include "memory"
 
+Step Cpu::currentStep = FETCH;
+
 Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), clock(0), memory(memory)
 {
     for (int i = 0; i < 32; i++)
@@ -151,8 +153,7 @@ void Cpu::write_back()
 
 void Cpu::step()
 {
-    static Step currentStep = FETCH;
-
+    
     switch (currentStep)
     {
     case FETCH:
@@ -182,9 +183,14 @@ void Cpu::step()
 
 void Cpu::run()
 {
-    while (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
+    while (memory.instructionMemory.find(PC) != memory.instructionMemory.end())
     {
         step();
+        step();
+        step();
+        step();
+        step();
+        currentStep = FETCH;
     }
     std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
 }
@@ -198,4 +204,17 @@ void Cpu::dumpRegisters() {
             first = false;
         }
     }
+}
+
+void Cpu::reset() {
+    for (int i = 0; i < 32; i++)
+    {
+        registers[i] = 0;
+    }
+    PC = 0;
+    IR = 0;
+    RM = 0;
+    RY = 0;
+    clock = 0;
+    memory.reset();
 }
