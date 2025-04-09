@@ -36,10 +36,10 @@ void Assembler::assemble(const std::string& input) {
     // Print JSON output
     std::cout << "{ \"machine_code\": [";
     bool first = true;
-    for (const auto& [pc, instr] : machineCode) {
+    for (const auto& [pc, instr] : memory.instructionMemory) {
         if (!first) std::cout << ",";
         std::cout << "{ \"pc\": \"0x" << std::hex << pc << "\", "
-                  << "\"machineCode\": \"0x" << instr->generate_machine_code() << "\" }";
+                  << "\"machineCode\": \"0x" << instr << "\" }";
         first = false;
     }
     std::cout << "], \"data_segment\": {";

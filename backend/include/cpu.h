@@ -20,11 +20,11 @@ public:
     int32_t RY;          
     uint64_t clock;        
 
-    Memory memory;
+    Memory& memory;
 
     std::unique_ptr<Instruction> currentInstruction;
 
-    Cpu();
+    Cpu(Memory &memory) ;
 
     void fetch();    
     void decode();   

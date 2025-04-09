@@ -138,6 +138,6 @@ void RInstruction::execute(Cpu& cpu) const {
 void RInstruction::writeback(Cpu& cpu) const {
     cpu.registers[rd] = cpu.RY;
     std::cout << "[Writeback] R-type: Writing " << cpu.RY << " to x" << rd << std::endl;
-    cpu.PC += 4;  // Increment PC
+   // cpu.PC += 4;  // Increment PC
 }
 

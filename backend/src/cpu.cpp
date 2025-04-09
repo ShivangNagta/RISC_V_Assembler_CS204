@@ -8,7 +8,7 @@
 #include <iostream>
 #include "memory"
 
-Cpu::Cpu() : PC(0), IR(0), RM(0), RY(0), clock(0)
+Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), clock(0), memory(memory)
 {
     for (int i = 0; i < 32; i++)
     {

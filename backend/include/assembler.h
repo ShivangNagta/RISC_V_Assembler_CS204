@@ -11,12 +11,12 @@ Uses two passes to convert the assembly to machine code
 
 class Assembler {
     SymbolTable symbols;
-    Memory memory;  
+    Memory& memory;  
     Parser parser;   
     FileIO fileIO;
     
 public:
-    Assembler() : parser(memory) {} ;
+    Assembler(Memory &memory) : parser(memory), memory(memory) {} ;
 
     void assemble(const std::string& input);
 };

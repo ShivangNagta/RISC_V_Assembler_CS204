@@ -4,9 +4,9 @@
 #include "cpu.h"
 #include "memory.h"
 
-Cpu cpu;
 Memory memory;
-Assembler assembler;
+Cpu cpu(memory);
+Assembler assembler(memory);
 
 void assembleAndOutput() {
     std::string jsonInput, line;
