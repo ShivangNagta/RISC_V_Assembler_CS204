@@ -49,7 +49,7 @@ app.post("/assemble", (req, res) => {
     // console.log(JSON.stringify(input_code))
     session.child.stdin.write(JSON.stringify(input_code)+"\n");
 
-    // console.log([...users.keys()])
+    console.log([...users.keys()])
 
 
     setTimeout(() => {
@@ -58,7 +58,7 @@ app.post("/assemble", (req, res) => {
         }else{
             try {
                 const assembledJSON = JSON.parse(session.output);
-                console.log(assembledJSON)
+                // console.log(assembledJSON)
                 res.json({
                     machine_code: assembledJSON.machine_code,
                     data_segment: assembledJSON.data_segment,
@@ -72,11 +72,63 @@ app.post("/assemble", (req, res) => {
 });
 
 app.post("/step", (req,res) => {
+    let { id } = req.body
+    if (!id || !users.has(id)) return res.status(400).json({ error: "Cannot step, you need to assemble first"})
 
+    const session = users.get(id)
+    session.output = ""
+    session.child.stdin.write("step\n");
+
+    // console.log(session.output)
+    // const outputJSON = JSON.parse(session.output);
+    // console.log(outputJSON)
+
+    setTimeout(() => {
+        try {
+            console.log(session.output)
+            const outputJSON = JSON.parse(session.output);
+            console.log(outputJSON)
+            res.json({
+                data_segment: outputJSON.data_segment,
+                instruction_memory: outputJSON.instruction_memory,
+                stack: outputJSON.stack,
+                registers: outputJSON.registers,
+                clock_cycles: outputJSON.clock_cycles,
+                comment: outputJSON.comment,
+            });
+        } catch (err) {
+            res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
+        }
+    }, 100);
+    
 })
 
 app.post("/run", (req,res) => {
+    let { id } = req.body
+    if (!id || !users.has(id)) return res.status(400).json({ error: "Cannot run, you need to assemble first"})
 
+    const session = users.get(id)
+    session.output = ""
+    session.child.stdin.write("run\n");
+
+    setTimeout(() => {
+        try {
+            console.log(session.output)
+            const outputJSON = JSON.parse(session.output);
+            console.log(outputJSON)
+            res.json({
+                data_segment: outputJSON.data_segment,
+                instruction_memory: outputJSON.instruction_memory,
+                stack: outputJSON.stack,
+                registers: outputJSON.registers,
+                clock_cycles: outputJSON.clock_cycles,
+                comment: "Finished",
+            });
+        } catch (err) {
+            res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
+        }
+    }, 100);
+    
 })
 
 app.listen(3000, () => console.log("Server running on port 3000"));

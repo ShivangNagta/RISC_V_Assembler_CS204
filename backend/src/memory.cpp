@@ -57,10 +57,17 @@ void Memory::dumpMemory() {
     bool first = true;
     for (const auto& [addr, val] : dataMemory) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::setw(8) << std::setfill('0') << std::hex << addr << "\": " << std::dec << val;
+        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << (int)val;
         first = false;
     }
 }
+
+// first = true;
+// for (const auto& [addr, val] : memory.getDataMemory()) {
+//     if (!first) std::cout << ",";
+//     std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << (int)val;
+//     first = false;
+// }
 
 void Memory::dumpInstructions() {
     bool first = true;

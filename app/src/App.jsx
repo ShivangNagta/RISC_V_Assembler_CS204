@@ -2,9 +2,13 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function App() {
-  const [assemblyCode, setAssemblyCode] = useState("");
+  // const [assemblyCode, setAssemblyCode] = useState("");
   const [machineCode, setMachineCode] = useState([]);
   const [dataSegment, setdataSegment] = useState({})
+  const [stack, setStack] = useState({})
+  const [registers, setRegisters] = useState({})
+  const [clockCycles, setClockCycles] = useState(0)
+  const [comment, setComment] = useState({})
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [editorContent, setEditorContent] = useState(`#Default
@@ -60,14 +64,57 @@ done:
     localStorage.setItem("id", "")
     setdataSegment({})
     setMachineCode([]);
+  }
 
+  const handleStep = async () => {
+    try {
+      let id = localStorage.getItem("id") ?? "";
+      const response = await axios.post("http://localhost:3000/step", { id });
+
+      console.log(response.data)
+
+      setdataSegment(response.data.data_segment)
+      setStack(response.data.stack)
+      setRegisters(response.data.registers)
+      setClockCycles(response.data.clock_cycles)
+      setComment(response.data.comment)
+
+      // console.log(registers)
+      // console.log(clockCycles)
+
+    } catch (err) {
+      console.log(err.response.data.error)
+      setError(`${err.response.data.error}`);
+    }
+  }
+
+  const handleRun = async () => {
+    try {
+      let id = localStorage.getItem("id") ?? "";
+      const response = await axios.post("http://localhost:3000/run", { id });
+
+      console.log(response.data)
+
+      setdataSegment(response.data.data_segment)
+      setStack(response.data.stack)
+      setRegisters(response.data.registers)
+      setClockCycles(response.data.clock_cycles)
+      setComment(response.data.comment)
+
+      // console.log(registers)
+      // console.log(clockCycles)
+
+    } catch (err) {
+      console.log(err.response.data.error)
+      setError(`${err.response.data.error}`);
+    }
   }
 
   const [activeTab, setActiveTab] = useState("simulator");
   const [rightTab, setRightTab] = useState("registers");
 
 
-  const registers = Array.from({ length: 32 }, (_, i) => ({ name: `x${i}`, value: "0x00000000" }));
+  // const registers = Array.from({ length: 32 }, (_, i) => ({ name: `x${i}`, value: "0x00000000" }));
 
 
   return (
@@ -122,8 +169,8 @@ done:
         <div className="flex w-full h-full overflow-hidden">
           <div className="w-2/3 border-r border-gray-700 p-2 flex flex-col h-full">
             <div className="flex justify-center space-x-2 mb-2 bg-gray-800 p-2 sticky top-0 z-10">
-              <button className="p-2 flex-1 bg-gray-700">Step</button>
-              <button className="p-2 flex-1 bg-gray-700">Run</button>
+              <button onClick={handleStep} className="p-2 flex-1 bg-gray-700">Step</button>
+              <button onClick={handleRun} className="p-2 flex-1 bg-gray-700">Run</button>
               <button onClick={handleReset} className="p-2 flex-1 bg-gray-700">Reset</button>
               <button onClick={assembleCode} className="p-2 flex-2 bg-gray-700">Assemble</button>
             </div>
@@ -163,7 +210,7 @@ done:
             </div>
             {rightTab === "registers" ? (
               <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
-                {registers.map((reg, i) => (
+                {Object.entries(registers).map((reg, i) => (
                   <div key={i} className="flex justify-between p-2 border-b border-gray-700 text-lg">
                     <span className="text-center flex-2">{reg.name}</span>
                     <span className="text-center flex-3">{reg.value}</span>
