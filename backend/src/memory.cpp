@@ -53,29 +53,11 @@ const std::unordered_map<uint32_t, uint8_t>& Memory::getDataMemory() const {
     return dataMemory;
 }
 
-
-void Memory::writeToFile(const std::string& filename) const {
-    std::ofstream out(filename);
-    if (!out.is_open()) return;
-
-
-    out << "=== Instruction Memory ===\n";
-    for (const auto& [addr, instr] : instructionMemory) {
-        out << std::hex << "0x" << addr << " 0x" << std::setw(8) << std::setfill('0') << instr << "\n";
-    }
-
-    
-    out << "\n=== Data Memory ===\n";
-    for (const auto& [addr, value] : dataMemory) {
-        out << std::hex << "0x" << addr << " 0x" << std::setw(2) << std::setfill('0') << static_cast<int>(value) << "\n";
-    }
-}
-
 void Memory::dumpMemory() {
     bool first = true;
     for (const auto& [addr, val] : dataMemory) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << addr << "\": " << std::dec << val;
+        std::cout << "\"0x" << std::setw(8) << std::setfill('0') << std::hex << addr << "\": " << std::dec << val;
         first = false;
     }
 }
@@ -84,7 +66,8 @@ void Memory::dumpInstructions() {
     bool first = true;
     for (const auto& [pc, instr] : instructionMemory) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << pc << "\": \"0x" << instr << "\"";
+        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << pc << "\": "
+        << "\"0x" << std::setw(8) << std::setfill('0') << instr << "\"";
         first = false;
     }
 }
@@ -93,7 +76,7 @@ void Memory::dumpStack() {
     bool first = true;
     for (const auto& [addr, val] : stackMemory) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << addr << "\": " << std::dec << val;
+        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << val;
         first = false;
     }
 }

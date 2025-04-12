@@ -188,6 +188,12 @@ done:
 
                 <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
                   <h2>Text Segment</h2>
+                  {machineCode.map((inst, index) => (
+                    <div key={index} className="flex justify-between p-2 border-b border-gray-700 ">
+                      <span>{inst.pc}</span>
+                      <span>{inst.machineCode}</span>
+                    </div>
+                    ))}
                 </div>
 
               </div>

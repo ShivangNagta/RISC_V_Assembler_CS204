@@ -38,8 +38,8 @@ void Assembler::assemble(const std::string& input) {
     bool first = true;
     for (const auto& [pc, instr] : memory.instructionMemory) {
         if (!first) std::cout << ",";
-        std::cout << "{ \"pc\": \"0x" << std::hex << pc << "\", "
-                  << "\"machineCode\": \"0x" << instr << "\" }";
+        std::cout << "{ \"pc\": \"0x" << std::hex << std::setw(8) << std::setfill('0') << pc << "\", "
+                  << "\"machineCode\": \"0x" << std::setw(8) << std::setfill('0') << instr << "\" }";
         first = false;
     }
     std::cout << "], \"data_segment\": {";
@@ -48,9 +48,10 @@ void Assembler::assemble(const std::string& input) {
     first = true;
     for (const auto& [addr, val] : memory.getDataMemory()) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << addr << "\": " << std::dec << (int)val;
+        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << (int)val;
         first = false;
     }
+
     std::cout << "} }" << std::endl;
 }
 

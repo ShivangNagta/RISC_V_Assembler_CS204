@@ -15,7 +15,6 @@ app.post("/assemble", (req, res) => {
     let { id, code } = req.body
     let session
     let error = false
-    console.log("hello")
     if (!id || !users.has(id)) {
         id = uuidv4();
         const __filename = fileURLToPath(import.meta.url);
@@ -38,7 +37,7 @@ app.post("/assemble", (req, res) => {
     } else {
         session = users.get(id);
     }
-
+    console.log("hello")
     session.output = ""; 
     session.child.stdin.write("assemble\n");
     // const cod = {
@@ -50,7 +49,7 @@ app.post("/assemble", (req, res) => {
     // console.log(JSON.stringify(input_code))
     session.child.stdin.write(JSON.stringify(input_code)+"\n");
 
-    console.log([...users.keys()])
+    // console.log([...users.keys()])
 
 
     setTimeout(() => {
@@ -59,7 +58,7 @@ app.post("/assemble", (req, res) => {
         }else{
             try {
                 const assembledJSON = JSON.parse(session.output);
-                console.log(assembledJSON.data_segment)
+                console.log(assembledJSON)
                 res.json({
                     machine_code: assembledJSON.machine_code,
                     data_segment: assembledJSON.data_segment,
@@ -71,10 +70,6 @@ app.post("/assemble", (req, res) => {
         }
     }, 100);
 });
-
-app.post("/reset", (req,res) => {
-    
-})
 
 app.post("/step", (req,res) => {
 

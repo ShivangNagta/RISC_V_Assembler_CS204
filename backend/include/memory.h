@@ -25,7 +25,6 @@ public:
     uint8_t fetchData(uint32_t address) const;
     const std::unordered_map<uint32_t, uint32_t>& getInstructionMemory() const;
     const std::unordered_map<uint32_t, uint8_t>& getDataMemory() const;
-    void writeToFile(const std::string& filename) const;
     void dumpMemory();
     void dumpInstructions();
     void dumpStack();
