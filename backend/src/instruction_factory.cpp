@@ -161,12 +161,16 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
     InstructionInfo info = instruction_map(inst);
 
     // Validate operand count
-    if (operands.size() != info.operandCount)
-    {
-        throw std::runtime_error("Incorrect number of operands for '" + inst +
-                                 "'. Expected " + std::to_string(info.operandCount) +
-                                 ", got " + std::to_string(operands.size()));
+    try {
+        if (operands.size() != info.operandCount) {
+            throw std::runtime_error("Incorrect number of operands for '" + inst +
+                                     "'. Expected " + std::to_string(info.operandCount) +
+                                     ", got " + std::to_string(operands.size()));
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
+    
     switch (info.opcode)
     {
 

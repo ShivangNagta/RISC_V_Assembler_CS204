@@ -2,71 +2,92 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function App() {
-    const [assemblyCode, setAssemblyCode] = useState("");
-    const [machineCode, setMachineCode] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+  const [assemblyCode, setAssemblyCode] = useState("");
+  const [machineCode, setMachineCode] = useState([]);
+  const [dataSegment, setdataSegment] = useState({})
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [editorContent, setEditorContent] = useState(`#Default
 
-    const assembleCode = async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const response = await axios.post("http://localhost:3000/assemble", { code: assemblyCode });
-            setMachineCode(formatMachineCode(response.data.machineCode));
-        } catch (err) {
-            console.log(err.response.data.error)
-            setError(`${err.response.data.error}`);
-        }
-        setLoading(false);
-    };
+.data
+ hello: .word 10, 20
 
-    // Format machine code properly with aligned addresses
-    const formatMachineCode = (code) => {
-        if (!code) return "";
-        return code
-            .split("\n")
-            .map(line => {
-                const parts = line.trim().split(/\s+/);
-                if (parts.length === 2) {
-                    return `<span class="text-green-400">${parts[0]}</span> <span class="text-yellow-300">${parts[1]}</span>`;
-                }
-                return `<span class="text-yellow-300">${line}</span>`;
-            })
-            .join("<br>");
-    };
+.text
 
-    const [activeTab, setActiveTab] = useState("simulator");
-    const [rightTab, setRightTab] = useState("registers");
-    const [editorContent, setEditorContent] = useState("");
-  
-    const registers = Array.from({ length: 32 }, (_, i) => ({ name: `x${i}`, value: "0x00000000" }));
-    const memory = { "0x1000": "0xABCD", "0x1004": "0x1234" };
-  
-    const instructions = [
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x8", machineCode: "0x004180B3", originalCode: "add x1, x3, x4" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-      { pc: "0x0", machineCode: "0x00100093", originalCode: "addi x1, x0, 1" },
-      { pc: "0x4", machineCode: "0x00309113", originalCode: "slli x2, x1, 3" },
-    ];
+_start:
+    # Initialize Fibonacci sequence
+    addi x0, x5, 0      # F(0) = 0
+    addi x0, x6, 1      # F(1) = 1
+    addi x0, x7, 10     # Set n (change this value for more terms)
+    
+    add x10, x5, x0  # Copy F(0) to x10
+    add x11, x6, x0  # Copy F(1) to x11
+
+loop:
+    beq x7, x0, done  # If n == 0, exit
+    add x12, x10, x11 # F(n) = F(n-1) + F(n-2)
+    
+    # Shift values for the next iteration
+    add x10, x11, x0  # F(n-1) becomes F(n-2)
+    add x11, x12, x0  # F(n) becomes F(n-1)
+    
+    addi x7, x7, -1   # Decrement counter
+    jal ra, loop            # Repeat
+
+done:
+    jal ra, done            # Infinite loop (halt simulation)`);
+
+  const assembleCode = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      let id = localStorage.getItem("id") ?? "";
+      const response = await axios.post("http://localhost:3000/assemble", { id, code: editorContent });
+      setMachineCode(response.data.machine_code);
+      setdataSegment(response.data.data_segment)
+      console.log(response.data.data_segment)
+      id = response.data.id
+      localStorage.setItem("id", id)
+    } catch (err) {
+      console.log(err.response.data.error)
+      setError(`${err.response.data.error}`);
+    }
+    setLoading(false);
+  };
+
+  const handleReset = () => {
+    localStorage.setItem("id", "")
+    setdataSegment({})
+    setMachineCode([]);
+
+  }
+
+  const [activeTab, setActiveTab] = useState("simulator");
+  const [rightTab, setRightTab] = useState("registers");
 
 
-    return (
-        <div className="p-4 w-full h-screen flex flex-col bg-gray-900 text-gray-200 font-mono overflow-hidden">
+  const registers = Array.from({ length: 32 }, (_, i) => ({ name: `x${i}`, value: "0x00000000" }));
+
+
+  return (
+
+    <div className="p-4 w-full h-screen flex flex-col bg-gray-900 text-gray-200 font-mono overflow-hidden">
+      {error && (
+        <div className="fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/4 bg-red-100 text-red-800 border border-red-400 p-6 rounded-xl shadow-xl z-50 min-w-[300px] text-center">
+          <h2 className="text-lg font-bold mb-2">Error</h2>
+          <p className="mb-4">{error}</p>
+          <button
+            onClick={() => setError("")}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-4 rounded"
+          >
+            OK
+          </button>
+        </div>
+      )}
+
+
+
       <style>{`
         ::-webkit-scrollbar {
           width: 0px;
@@ -103,8 +124,8 @@ export default function App() {
             <div className="flex justify-center space-x-2 mb-2 bg-gray-800 p-2 sticky top-0 z-10">
               <button className="p-2 flex-1 bg-gray-700">Step</button>
               <button className="p-2 flex-1 bg-gray-700">Run</button>
-              <button className="p-2 flex-1 bg-gray-700">Reset</button>
-              <button className="p-2 flex-2 bg-gray-700">Assemble</button>
+              <button onClick={handleReset} className="p-2 flex-1 bg-gray-700">Reset</button>
+              <button onClick={assembleCode} className="p-2 flex-2 bg-gray-700">Assemble</button>
             </div>
             <div className="overflow-auto flex-grow">
               <table className="w-full text-center border-collapse">
@@ -112,15 +133,13 @@ export default function App() {
                   <tr className="border-b border-gray-700">
                     <th className="p-2">PC</th>
                     <th className="p-2">Machine Code</th>
-                    <th className="p-2">Original Code</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {instructions.map((inst, index) => (
+                  {machineCode.map((inst, index) => (
                     <tr key={index} className="border-b border-gray-700">
                       <td className="p-2">{inst.pc}</td>
                       <td className="p-2">{inst.machineCode}</td>
-                      <td className="p-2">{inst.originalCode}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -146,24 +165,36 @@ export default function App() {
               <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
                 {registers.map((reg, i) => (
                   <div key={i} className="flex justify-between p-2 border-b border-gray-700 text-lg">
-                  <span className="text-center flex-2">{reg.name}</span>
-                  <span className="text-center flex-3">{reg.value}</span>
-                </div>
+                    <span className="text-center flex-2">{reg.name}</span>
+                    <span className="text-center flex-3">{reg.value}</span>
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
-                {Object.entries(memory).map(([addr, value], i) => (
-                  <div key={i} className="flex justify-between p-2 border-b border-gray-700">
-                    <span>{addr}</span>
-                    <span>{value}</span>
-                  </div>
-                ))}
+                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2 mb-3">
+                  <h2>Stack</h2>
+                </div>
+
+                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2 mb-3">
+                  <h2>Data Segment</h2>
+                  {Object.entries(dataSegment).map(([addr, value], i) => (
+                    <div key={i} className="flex justify-between p-2 border-b border-gray-700 ">
+                      <span>{addr}</span>
+                      <span>{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
+                  <h2>Text Segment</h2>
+                </div>
+
               </div>
             )}
           </div>
         </div>
       )}
     </div>
-      );
+  );
 }

@@ -75,16 +75,28 @@ int main(int argc, char* argv[]) {
     {
             std::string command;
     std::getline(std::cin, command);
-        if (command == "assemble") {
-            cpu.reset();
-            assembleAndOutput();
-        } else if (command == "run") {
-            runAndOutput();
-        } else if (command == "step") {
-            stepAndOutput();
-        } else {
-            std::cerr << "Invalid command\n";
+        try{
+            if (command == "assemble") {
+                cpu.reset();
+                assembleAndOutput();
+            } else if (command == "run") {
+                runAndOutput();
+            } else if (command == "step") {
+                stepAndOutput();
+            } else {
+                std::cerr << "Invalid command\n";
+            }
         }
+        catch (const std::runtime_error& e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Standard exception: " << e.what() << std::endl;
+        }
+        catch (...) {
+            std::cerr << "An unknown error occurred.\n";
+        }
+
     }
 
     return 0;
