@@ -178,5 +178,5 @@ void IInstruction::writeback(Cpu& cpu) const {
         cpu.registers[rd] = cpu.RY;
         std::cout << "[Writeback] I-type: Writing " << cpu.RY << " to x" << rd << std::endl;
     }
-    cpu.PC += 4;  // Increment PC
+    // cpu.PC += 4;  // Increment PC
 }

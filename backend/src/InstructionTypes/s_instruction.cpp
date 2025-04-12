@@ -126,6 +126,6 @@ void SInstruction::memory_update(Cpu& cpu) const {
 void SInstruction::writeback(Cpu& cpu) const {
     // Store instructions don't write back to a register
     std::cout << "[Writeback] Store: No register writeback" << std::endl;
-    cpu.PC += 4;  // Increment PC
+    // cpu.PC += 4;  // Increment PC
 }
 

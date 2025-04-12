@@ -22,19 +22,19 @@ void Cpu::fetch()
 {
     if (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
     {
-        std::cout << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
+        std::cerr << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
         return;
     }
     IR = memory.instructionMemory[PC];
     PC += 4;
-    std::cout << "[Fetch] PC: 0x" << std::hex << PC
-              << " | Instruction: 0x" << IR << std::endl;
+    // std::cout << "[Fetch] PC: 0x" << std::hex << PC
+    //           << " | Instruction: 0x" << IR << std::endl;
 }
 
 void Cpu::decode()
 {
     currentInstruction = decodeInstruction(IR);
-    std::cout << "[Decode] Decoding instruction: 0x" << std::hex << IR << std::endl;
+    // std::cout << "[Decode] Decoding instruction: 0x" << std::hex << IR << std::endl;
 }
 
 int32_t Cpu::signExtend(uint32_t value, uint32_t bits)
@@ -123,18 +123,18 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
 
 void Cpu::execute()
 {
-    std::cout << "[Execute] Executing instruction: 0x" << std::hex << IR << std::endl;
+    // std::cout << "[Execute] Executing instruction: 0x" << std::hex << IR << std::endl;
     currentInstruction->execute(*this);
 }
 
 void Cpu::memory_update()
 {
     if (!currentInstruction) {
-        std::cout << "[Memory] Error: No instruction to execute\n";
+        std::cerr << "[Memory] Error: No instruction to execute\n";
         return;
     }
     
-    std::cout << "[Memory] Processing memory stage for instruction: 0x" << std::hex << IR << std::endl;
+    // std::cout << "[Memory] Processing memory stage for instruction: 0x" << std::hex << IR << std::endl;
     
     // Let the instruction handle its own memory operations
     currentInstruction->memory_update(*this);
@@ -143,10 +143,10 @@ void Cpu::memory_update()
 void Cpu::write_back()
 {
     if (!currentInstruction) {
-        std::cout << "[Write Back] Error: No instruction to execute\n";
+        std::cerr << "[Write Back] Error: No instruction to execute\n";
         return;
     }
-    std::cout << "[Write Back] Writing results to registers." << std::endl;
+    // std::cout << "[Write Back] Writing results to registers." << std::endl;
     currentInstruction->writeback(*this);
 
 }
@@ -175,7 +175,7 @@ void Cpu::step()
     case WRITEBACK:
         write_back();
         clock++;
-        std::cout << "[Clock] Cycle: " << clock << "\n";
+        // std::cout << "[Clock] Cycle: " << clock << "\n";
         currentStep = FETCH;
         break;
     }
@@ -192,7 +192,7 @@ void Cpu::run()
         step();
         currentStep = FETCH;
     }
-    std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
+    // std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
 }
 
 void Cpu::dumpRegisters() {
