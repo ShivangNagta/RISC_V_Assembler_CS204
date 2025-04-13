@@ -7,6 +7,8 @@
 #include "InstructionTypes/uj_instruction.h"
 #include <iostream>
 #include "memory"
+#include <sstream>
+#include <iomanip>
 
 Step Cpu::currentStep = FETCH;
 
@@ -29,7 +31,11 @@ void Cpu::fetch()
     }
     IR = memory.instructionMemory[PC];
 
-    memory.comment = "[Fetch] Fetched instruction 0x" + std::to_string(IR) + " from address 0x" + std::to_string(PC);
+    std::stringstream ss;
+    ss << "[Fetch] Fetched instruction 0x" << std::setw(8) << std::setfill('0') << std::hex << std::uppercase << IR
+       << " from address 0x" << std::setw(8) << std::setfill('0') << std::hex << std::uppercase << PC;
+    memory.comment = ss.str();
+    
     PC += 4;
     // std::cout << "[Fetch] PC: 0x" << std::hex << PC
     //           << " | Instruction: 0x" << IR << std::endl;
@@ -270,7 +276,7 @@ void Cpu::dumpRegisters()
         {
             if (!first)
                 std::cout << ",";
-            std::cout << "\"x" << i << "\": " << registers[i];
+            std::cout << "\"x" << i << "\": \"" << registers[i] << "\"";
             first = false;
         }
     }

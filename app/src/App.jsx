@@ -2,13 +2,12 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function App() {
-  // const [assemblyCode, setAssemblyCode] = useState("");
   const [machineCode, setMachineCode] = useState([]);
-  const [dataSegment, setdataSegment] = useState({})
-  const [stack, setStack] = useState({})
-  const [registers, setRegisters] = useState({})
-  const [clockCycles, setClockCycles] = useState(0)
-  const [comment, setComment] = useState({})
+  const [dataSegment, setdataSegment] = useState({});
+  const [stack, setStack] = useState({});
+  const [registers, setRegisters] = useState({});
+  const [clockCycles, setClockCycles] = useState(0);
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [editorContent, setEditorContent] = useState(`#Default
@@ -36,147 +35,123 @@ loop:
     add x11, x12, x0  # F(n) becomes F(n-1)
     
     addi x7, x7, -1   # Decrement counter
-    jal ra, loop            # Repeat
+    jal ra, loop      # Repeat
 
 done:
-    jal ra, done            # Infinite loop (halt simulation)`);
+    jal ra, done      # Infinite loop (halt simulation)`);
 
   const assembleCode = async () => {
     setLoading(true);
     setError("");
-
     try {
       let id = localStorage.getItem("id") ?? "";
       const response = await axios.post("http://localhost:3000/assemble", { id, code: editorContent });
       setMachineCode(response.data.machine_code);
-      setdataSegment(response.data.data_segment)
-      console.log(response.data.data_segment)
-      id = response.data.id
-      localStorage.setItem("id", id)
+      setdataSegment(response.data.data_segment);
+      localStorage.setItem("id", response.data.id);
     } catch (err) {
-      console.log(err.response.data.error)
-      setError(`${err.response.data.error}`);
+      setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
     setLoading(false);
   };
 
   const handleReset = () => {
-    localStorage.setItem("id", "")
-    setdataSegment({})
+    localStorage.setItem("id", "");
+    setdataSegment({});
+    setStack({});
+    setRegisters({});
     setMachineCode([]);
-  }
+    setComment("");
+    setClockCycles(0);
+  };
 
   const handleStep = async () => {
     try {
-      let id = localStorage.getItem("id") ?? "";
+      const id = localStorage.getItem("id") ?? "";
       const response = await axios.post("http://localhost:3000/step", { id });
-
-      console.log(response.data)
-
-      setdataSegment(response.data.data_segment)
-      setStack(response.data.stack)
-      setRegisters(response.data.registers)
-      setClockCycles(response.data.clock_cycles)
-      setComment(response.data.comment)
-
-      // console.log(registers)
-      // console.log(clockCycles)
-
+      setdataSegment(response.data.data_segment);
+      setStack(response.data.stack);
+      setRegisters(response.data.registers);
+      setClockCycles(response.data.clock_cycles);
+      setComment(response.data.comment);
     } catch (err) {
-      console.log(err.response.data.error)
-      setError(`${err.response.data.error}`);
+      setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
-  }
+  };
 
   const handleRun = async () => {
     try {
-      let id = localStorage.getItem("id") ?? "";
+      const id = localStorage.getItem("id") ?? "";
       const response = await axios.post("http://localhost:3000/run", { id });
-
-      console.log(response.data)
-
-      setdataSegment(response.data.data_segment)
-      setStack(response.data.stack)
-      setRegisters(response.data.registers)
-      setClockCycles(response.data.clock_cycles)
-      setComment(response.data.comment)
-
-      // console.log(registers)
-      // console.log(clockCycles)
-
+      setdataSegment(response.data.data_segment);
+      setStack(response.data.stack);
+      setRegisters(response.data.registers);
+      setClockCycles(response.data.clock_cycles);
+      setComment(response.data.comment);
     } catch (err) {
-      console.log(err.response.data.error)
-      setError(`${err.response.data.error}`);
+      setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
-  }
+  };
 
   const [activeTab, setActiveTab] = useState("simulator");
   const [rightTab, setRightTab] = useState("registers");
 
-
-  // const registers = Array.from({ length: 32 }, (_, i) => ({ name: `x${i}`, value: "0x00000000" }));
-
-
   return (
-
-    <div className="p-4 w-full h-screen flex flex-col bg-gray-900 text-gray-200 font-mono overflow-hidden">
-      {error && (
-        <div className="fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/4 bg-red-100 text-red-800 border border-red-400 p-6 rounded-xl shadow-xl z-50 min-w-[300px] text-center">
-          <h2 className="text-lg font-bold mb-2">Error</h2>
-          <p className="mb-4">{error}</p>
-          <button
-            onClick={() => setError("")}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-4 rounded"
-          >
-            OK
-          </button>
-        </div>
-      )}
-
-
-
-      <style>{`
-        ::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: transparent;
-        }
-      `}</style>
-      <div className="flex w-2/3 border-b border-gray-700 mb-4 justify-center">
+    <div className="p-4 w-full h-screen flex flex-col bg-black text-gray-200 font-mono overflow-hidden">
+      {/* Tabs */}
+      <div className="flex flex-wrap justify-center md:w-2/3 border-b border-gray-700 mb-4 mx-auto">
         <div
           onClick={() => setActiveTab("editor")}
-          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "editor" ? "bg-gray-700" : "bg-gray-800"}`}
+          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "editor" ? "bg-gray-800" : "bg-gray-900"
+            }`}
         >
           Editor
         </div>
         <div
           onClick={() => setActiveTab("simulator")}
-          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "simulator" ? "bg-gray-700" : "bg-gray-800"}`}
+          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "simulator" ? "bg-gray-800" : "bg-gray-900"
+            }`}
         >
           Simulator
         </div>
       </div>
+
+      {/* Editor Area */}
       {activeTab === "editor" ? (
         <textarea
-          className="w-full h-full bg-gray-800 p-2 text-gray-200 border-2 border-gray-700"
+          className="w-full h-full bg-gray-900 p-3 text-green-400 border border-gray-700 text-sm md:text-base resize-none"
           value={editorContent}
           onChange={(e) => setEditorContent(e.target.value)}
           placeholder="Write your RISC-V code here..."
         />
       ) : (
-        <div className="flex w-full h-full overflow-hidden">
-          <div className="w-2/3 border-r border-gray-700 p-2 flex flex-col h-full">
-            <div className="flex justify-center space-x-2 mb-2 bg-gray-800 p-2 sticky top-0 z-10">
-              <button onClick={handleStep} className="p-2 flex-1 bg-gray-700">Step</button>
-              <button onClick={handleRun} className="p-2 flex-1 bg-gray-700">Run</button>
-              <button onClick={handleReset} className="p-2 flex-1 bg-gray-700">Reset</button>
-              <button onClick={assembleCode} className="p-2 flex-2 bg-gray-700">Assemble</button>
+        // Simulator Layout
+        <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
+          {/* Left Simulator Panel */}
+          <div className="w-full md:w-2/3 border-r border-gray-700 p-2 flex flex-col h-full">
+            {/* Buttons */}
+            <div className="flex flex-wrap justify-center gap-2 bg-gray-900 p-2 sticky top-0 z-10">
+              <button onClick={handleStep} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
+                Step
+              </button>
+              <button onClick={handleRun} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
+                Run
+              </button>
+              <button onClick={handleReset} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
+                Reset
+              </button>
+              <button
+                onClick={assembleCode}
+                className="px-3 py-1 bg-indigo-700 hover:bg-indigo-600 rounded text-white text-sm"
+              >
+                Assemble
+              </button>
             </div>
-            <div className="overflow-auto flex-grow">
-              <table className="w-full text-center border-collapse">
-                <thead>
+
+            {/* Machine Code Table */}
+            <div className="overflow-auto flex-grow border border-gray-700">
+              <table className="w-full text-center text-sm border-collapse">
+                <thead className="sticky top-0 bg-gray-800">
                   <tr className="border-b border-gray-700">
                     <th className="p-2">PC</th>
                     <th className="p-2">Machine Code</th>
@@ -184,7 +159,7 @@ done:
                 </thead>
                 <tbody>
                   {machineCode.map((inst, index) => (
-                    <tr key={index} className="border-b border-gray-700">
+                    <tr key={index} className="border-b border-gray-800">
                       <td className="p-2">{inst.pc}</td>
                       <td className="p-2">{inst.machineCode}</td>
                     </tr>
@@ -192,62 +167,73 @@ done:
                 </tbody>
               </table>
             </div>
+
+            {/* Console Output */}
+            <div className="mt-2 bg-black text-lime-400 p-2 border-t border-l border-r border-gray-700 rounded-b h-10 overflow-auto text-sm">
+              <strong className="text-gray-400">Clock Cycles : {clockCycles}</strong>
+            </div>
+            <div className="mt-2 bg-black text-lime-400 p-2 border-t border-l border-r border-gray-700 rounded-b h-24 overflow-auto text-sm">
+              <strong className="text-gray-400">Console:</strong>
+              <div className="whitespace-pre-wrap">{comment}</div>
+            </div>
           </div>
-          <div className="w-1/3 p-2 flex flex-col h-full border-l border-gray-700">
+
+          {/* Right Memory/Register Panel */}
+          <div className="w-full md:w-1/3 p-2 flex flex-col h-full border-l border-gray-700">
+            {/* Tabs */}
             <div className="flex border-b border-gray-700 justify-center mb-2">
               <div
                 onClick={() => setRightTab("registers")}
-                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "registers" ? "bg-gray-700" : "bg-gray-800"}`}
+                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "registers" ? "bg-gray-800" : "bg-gray-900"
+                  }`}
               >
                 Registers
               </div>
               <div
                 onClick={() => setRightTab("memory")}
-                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "memory" ? "bg-gray-700" : "bg-gray-800"}`}
+                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "memory" ? "bg-gray-800" : "bg-gray-900"
+                  }`}
               >
                 Memory
               </div>
             </div>
-            {rightTab === "registers" ? (
-              <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
-                {Object.entries(registers).map((reg, i) => (
-                  <div key={i} className="flex justify-between p-2 border-b border-gray-700 text-lg">
-                    <span className="text-center flex-2">{reg.name}</span>
-                    <span className="text-center flex-3">{reg.value}</span>
+
+            {/* Right Tab Content */}
+            <div className="overflow-auto max-h-screen border border-gray-700 p-2 text-sm">
+              {rightTab === "registers" ? (
+                Object.entries(registers).map(([name, value], i) => (
+                  <div key={i} className="flex justify-between border-b border-gray-700 py-1">
+                    <span>{name}</span>
+                    <span>{value}</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
-                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2 mb-3">
-                  <h2>Stack</h2>
-                </div>
-
-                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2 mb-3">
-                  <h2>Data Segment</h2>
-                  {Object.entries(dataSegment).map(([addr, value], i) => (
-                    <div key={i} className="flex justify-between p-2 border-b border-gray-700 ">
-                      <span>{addr}</span>
-                      <span>{value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="overflow-auto max-h-screen border-2 border-gray-700 p-2">
-                  <h2>Text Segment</h2>
-                  {machineCode.map((inst, index) => (
-                    <div key={index} className="flex justify-between p-2 border-b border-gray-700 ">
-                      <span>{inst.pc}</span>
-                      <span>{inst.machineCode}</span>
-                    </div>
+                ))
+              ) : (
+                <>
+                  <div className="mb-3">
+                    <h2 className="text-gray-400">Stack</h2>
+                    {Object.entries(stack).map(([addr, value], i) => (
+                      <div key={i} className="flex justify-between border-b border-gray-700 py-1">
+                        <span>{addr}</span>
+                        <span>{value}</span>
+                      </div>
                     ))}
-                </div>
-
-              </div>
-            )}
+                  </div>
+                  <div>
+                    <h2 className="text-gray-400">Data Segment</h2>
+                    {Object.entries(dataSegment).map(([addr, value], i) => (
+                      <div key={i} className="flex justify-between border-b border-gray-700 py-1">
+                        <span>{addr}</span>
+                        <span>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
     </div>
+
   );
 }

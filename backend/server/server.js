@@ -68,7 +68,7 @@ app.post("/assemble", (req, res) => {
                 res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
             }
         }
-    }, 100);
+    }, 1000);
 });
 
 app.post("/step", (req,res) => {
@@ -99,7 +99,7 @@ app.post("/step", (req,res) => {
         } catch (err) {
             res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
         }
-    }, 100);
+    }, 500);
     
 })
 
@@ -127,7 +127,7 @@ app.post("/run", (req,res) => {
         } catch (err) {
             res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
         }
-    }, 100);
+    }, 500);
     
 })
 
