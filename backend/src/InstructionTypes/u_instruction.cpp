@@ -38,7 +38,7 @@ void UInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
     }
 
-    cpu.memory.comment = "[Execute] U-type instruction " + instrName + " executed and result stored in x" + std::to_string(rd) + ": " + std::to_string(cpu.RY);
+    cpu.memory.comment = "[Execute] U-type instruction " + instrName + " executed and result: " + std::to_string(cpu.RY);
 }
 
 void UInstruction::memory_update(Cpu& cpu) const {
@@ -47,6 +47,10 @@ void UInstruction::memory_update(Cpu& cpu) const {
 }
 
 void UInstruction::writeback(Cpu& cpu) const {
+    if (rd == 0) {
+        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+        return;
+    }
     cpu.registers[rd] = cpu.RY;
     cpu.memory.comment = "[Writeback] U-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
     // cpu.PC += 4;  // Increment PC

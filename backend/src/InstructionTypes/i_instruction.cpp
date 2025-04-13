@@ -55,7 +55,7 @@ void IInstruction::execute(Cpu& cpu) const {
             //           << " (" << rs1_val << " & " << imm << " = " << result << ")" << std::endl;
         }
 
-        cpu.memory.comment = "[Execute] I-format instruction " + instrName + " executed and result stored in x" + std::to_string(rd) + ": " + std::to_string(result);
+        cpu.memory.comment = "[Execute] I-format instruction " + instrName + " executed and result" + ": " + std::to_string(result);
     }
     else if (op == 0b0000011) {  // I-format load
         // Calculate effective address
@@ -169,6 +169,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
 }
 
 void IInstruction::writeback(Cpu& cpu) const {
+    if (rd == 0) {
+        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+        return;
+    }
     if (op == 0b0000011) {  // Load instructions
         cpu.registers[rd] = cpu.RY;
         // std::cout << "[Writeback] Load: Writing " << cpu.RY << " to x" << rd << std::endl;

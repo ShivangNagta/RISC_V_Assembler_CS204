@@ -140,7 +140,7 @@ void RInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] Unknown R-type instruction: funct3=" << funct3 << ", funct7=" << funct7 << std::endl;
     }
 
-    cpu.memory.comment = "[Execute] R-type instruction " + instrName + " executed and result stored in x" + std::to_string(rd) + ": " + std::to_string(result);
+    cpu.memory.comment = "[Execute] R-type instruction " + instrName + " executed and result: " + std::to_string(result);
 }
 
 void RInstruction::memory_update(Cpu& cpu) const {
@@ -149,6 +149,10 @@ void RInstruction::memory_update(Cpu& cpu) const {
 }
 
 void RInstruction::writeback(Cpu& cpu) const {
+    if (rd == 0) {
+        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+        return;
+    }
     cpu.registers[rd] = cpu.RY;
     cpu.memory.comment = "[Writeback] R-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
 }

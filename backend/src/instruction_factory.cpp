@@ -39,7 +39,7 @@ std::pair<int32_t, std::string> parseMemoryOperand(const std::string &operand)
         {
             throw std::runtime_error("Invalid register name in memory operand: '" + baseReg + "'");
         }
-        cout << "offset: " << offset << " baseReg: " << baseReg << endl;
+        // cout << "offset: " << offset << " baseReg: " << baseReg << endl;
         return {offset, baseReg};
     }
 

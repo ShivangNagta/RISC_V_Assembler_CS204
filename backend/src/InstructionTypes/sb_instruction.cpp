@@ -72,7 +72,7 @@ void SBInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] Branch taken. Target address = " << cpu.RM << std::endl;
     } 
     else {
-        cpu.memory.comment = "[Execute] Branch not taken. Continuing to next instruction.";
+        cpu.memory.comment = "[Execute] Branch not taken.";
         // std::cout << "[Execute] Branch not taken." << std::endl;
     }
 }
