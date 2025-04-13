@@ -5,6 +5,13 @@
 #include <vector>
 #include <stdexcept>
 
+bool isNumber(const std::string& s) {
+    for (char c : s) {
+        if (!std::isdigit(c)) return false;
+    }
+    return !s.empty(); // to avoid empty strings being treated as numbers
+}
+
 bool DirectiveHandler::isDirective(const std::string &line) {
     return line[0] == '.';
 }
@@ -36,6 +43,15 @@ void DirectiveHandler::process(const std::string &line, uint32_t &address, bool 
         if (directive == ".byte") {
             std::string value_str;
             while (iss >> value_str) {
+                if (!isNumber(value_str)) {
+                    if (value_str.back() == ',') {
+                        value_str.pop_back(); // Remove the comma
+                    }
+                    else {
+                        std::cerr << "Warning: Invalid value " << value_str << " for .half directive\n";
+                        break;
+                    }
+                }
                 int value = std::stoi(value_str, nullptr, 0);
 
                 if (!isInByteRange(value)) {
@@ -47,13 +63,22 @@ void DirectiveHandler::process(const std::string &line, uint32_t &address, bool 
                 }
                 address += 1;
 
-                char comma;
-                iss >> comma;
+                // char comma;
+                // iss >> comma;
             }
         } 
         else if (directive == ".half") {
             std::string value_str;
             while (iss >> value_str) {
+                if (!isNumber(value_str)) {
+                    if (value_str.back() == ',') {
+                        value_str.pop_back(); // Remove the comma
+                    }
+                    else {
+                        std::cerr << "Warning: Invalid value " << value_str << " for .half directive\n";
+                        break;
+                    }
+                }
                 int value = std::stoi(value_str, nullptr, 0);
 
                 if (!isInHalfWordRange(value)) {
@@ -69,13 +94,22 @@ void DirectiveHandler::process(const std::string &line, uint32_t &address, bool 
                 }
                 address += 2;
 
-                char comma;
-                iss >> comma;
+                // char comma;
+                // iss >> comma;
             }
         } 
         else if (directive == ".word") {
             std::string value_str;
             while (iss >> value_str) {
+                if (!isNumber(value_str)) {
+                    if (value_str.back() == ',') {
+                        value_str.pop_back(); // Remove the comma
+                    }
+                    else {
+                        std::cerr << "Warning: Invalid value " << value_str << " for .half directive\n";
+                        break;
+                    }
+                }
                 int value = std::stoi(value_str, nullptr, 0);
 
                 if (!isInWordRange(value)) {
@@ -93,8 +127,8 @@ void DirectiveHandler::process(const std::string &line, uint32_t &address, bool 
                 }
                 address += 4;
 
-                char comma;
-                iss >> comma;
+                // char comma;
+                // iss >> comma;
             }
         } 
         else if (directive == ".dword") {
@@ -109,8 +143,8 @@ void DirectiveHandler::process(const std::string &line, uint32_t &address, bool 
                 }
                 address += 8;
 
-                char comma;
-                iss >> comma;
+                // char comma;
+                // iss >> comma;
             }
         } 
         else if (directive == ".asciiz") {

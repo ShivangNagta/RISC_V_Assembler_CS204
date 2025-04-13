@@ -52,7 +52,7 @@ void runAndOutput() {
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
     std::cout << "}, \"clock_cycles\": " << std::dec << cpu.clock << " ";
-    std::cout << "} }" << std::endl;
+    std::cout << "}" << std::endl;
 }
 
 void stepAndOutput() {
@@ -67,9 +67,9 @@ void stepAndOutput() {
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
     std::cout << "}, \"clock_cycles\": " << cpu.clock << " ";
-    std::cout << ", \"comment\": {";
+    std::cout << ", \"comment\": ";
     memory.dumpComments();
-    std::cout << "} }" << std::endl;
+    std::cout << "}" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
