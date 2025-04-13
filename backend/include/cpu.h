@@ -17,7 +17,8 @@ public:
     uint32_t registers[32] = {0};       
     uint32_t IR;         
     uint32_t RM;          
-    int32_t RY;          
+    int32_t RY;       
+    int32_t RZ;   
     uint64_t clock;        
 
     static Step currentStep;

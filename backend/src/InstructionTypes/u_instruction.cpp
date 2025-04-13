@@ -35,13 +35,19 @@ void UInstruction::execute(Cpu& cpu) const {
     else if (op == 0b0010111) {
         // auipc (add upper immediate to pc), minus 4 because of +4 in fetch stage
         cpu.RY = cpu.PC + imm - 4;
-        // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm 
-        //           << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
+        // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
     }
+
+    cpu.memory.comment = "[Execute] U-type instruction " + instrName + " executed and result stored in x" + std::to_string(rd) + ": " + std::to_string(cpu.RY);
+}
+
+void UInstruction::memory_update(Cpu& cpu) const {
+    // No memory update for U-type instructions
+    cpu.memory.comment = "[Memory] No memory update for U-type instruction " + instrName;
 }
 
 void UInstruction::writeback(Cpu& cpu) const {
     cpu.registers[rd] = cpu.RY;
-    std::cout << "[Writeback] U-type: Writing " << cpu.RY << " to x" << rd << std::endl;
+    cpu.memory.comment = "[Writeback] U-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
     // cpu.PC += 4;  // Increment PC
 }

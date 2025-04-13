@@ -51,7 +51,7 @@ void runAndOutput() {
     memory.dumpStack();
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
-    std::cout << "}, \"clock_cycles\": " << cpu.clock << " ";
+    std::cout << "}, \"clock_cycles\": " << std::dec << cpu.clock << " ";
     std::cout << "} }" << std::endl;
 }
 
@@ -68,7 +68,7 @@ void stepAndOutput() {
     cpu.dumpRegisters();
     std::cout << "}, \"clock_cycles\": " << cpu.clock << " ";
     std::cout << ", \"comment\": {";
-    //memory.dumpComments(); Implement Kr Lio
+    memory.dumpComments();
     std::cout << "} }" << std::endl;
 }
 

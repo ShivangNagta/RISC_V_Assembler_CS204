@@ -37,14 +37,22 @@ void UJInstruction::execute(Cpu& cpu) const {
     
     // Calculate target address
     cpu.RM = cpu.PC + imm - 4;  // -4 because of +4 in fetch stage
+
+    cpu.memory.comment = "[Execute] UJ-format instruction " + instrName + " executed. Return address: " + std::to_string(cpu.RY) + ", Target address: " + std::to_string(cpu.RM);
     
     // std::cout << "[Execute] JAL: Return address = " << cpu.RY 
     //           << ", Target address = " << cpu.RM << std::endl;
 }
 
+void UJInstruction::memory_update(Cpu& cpu) const {
+    // No memory update for UJ-type instructions
+    cpu.memory.comment = "[Memory] No memory update for UJ-type instruction " + instrName;
+}
+
 void UJInstruction::writeback(Cpu& cpu) const {
     cpu.registers[rd] = cpu.PC + 4;  // Store return address
     cpu.PC = cpu.RM;  // Jump to target address
-    std::cout << "[Writeback] JAL: Writing return address " << cpu.registers[rd] 
-              << " to x" << rd << ", jumping to " << cpu.PC << std::endl;
+    // std::cout << "[Writeback] JAL: Writing return address " << cpu.registers[rd] 
+    //           << " to x" << rd << ", jumping to " << cpu.PC << std::endl;
+    cpu.memory.comment = "[Writeback] JAL: Writing return address " + std::to_string(cpu.registers[rd]) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
 }

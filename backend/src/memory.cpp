@@ -88,8 +88,13 @@ void Memory::dumpStack() {
     }
 }
 
+void Memory::dumpComments() {
+    std::cout << comment;
+}
+
 void Memory::reset() {
     instructionMemory.clear();
     dataMemory.clear();
     stackMemory.clear();
+    comment.clear();
 }

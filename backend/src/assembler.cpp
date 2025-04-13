@@ -2,6 +2,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <iomanip>
 
 void Assembler::assemble(const std::string& input) {
     std::map<uint32_t, std::unique_ptr<Instruction>> machineCode;

@@ -181,7 +181,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_ADD,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::SUB:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SUB,
@@ -189,7 +189,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_SUB,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::AND:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_AND,
@@ -197,7 +197,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_AND,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::OR:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_OR,
@@ -205,7 +205,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_OR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::XOR:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_XOR,
@@ -213,7 +213,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_XOR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::SLL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SLL,
@@ -221,7 +221,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_SLL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::SRL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SRL,
@@ -229,7 +229,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_SRL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::SRA:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SRA,
@@ -237,7 +237,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_SRA,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::SLT:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_SLT,
@@ -245,7 +245,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_SLT,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::MUL:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_MUL,
@@ -253,7 +253,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_MUL,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::DIV:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_DIV,
@@ -261,7 +261,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_DIV,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     case RISCV_CONSTANTS::INSTRUCTIONS::REM:
         return std::make_unique<RInstruction>(RISCV_CONSTANTS::FUNCT7_REM,
@@ -269,7 +269,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_REM,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_R_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_R_TYPE, "");
 
     // I-Type instructions
     case RISCV_CONSTANTS::INSTRUCTIONS::ANDI:
@@ -280,7 +280,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_ANDI,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
+                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::ADDI:
@@ -291,7 +291,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_ADDI,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
+                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::ORI:
@@ -302,7 +302,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                               RISCV_CONSTANTS::FUNCT3_ORI,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD);
+                                              RISCV_CONSTANTS::OPCODE_I_TYPE_NON_LOAD, "");
     }
 
     // Load instructions
@@ -340,7 +340,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(baseReg),
                                               funct3,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD);
+                                              RISCV_CONSTANTS::OPCODE_I_TYPE_LOAD, "");
     }
 
     // jalr instruction
@@ -356,7 +356,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(baseReg),
                                               RISCV_CONSTANTS::FUNCT3_JALR,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_I_TYPE_JALR);
+                                              RISCV_CONSTANTS::OPCODE_I_TYPE_JALR, "");
     }
 
     // Store instructions (SB, SH, SW, SD)
@@ -394,7 +394,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]), // rs2 (source register)
                                               RISCV_CONSTANTS::REGISTERS.at(baseReg),     // rs1 (base register)
                                               funct3,
-                                              RISCV_CONSTANTS::OPCODE_S_TYPE);
+                                              RISCV_CONSTANTS::OPCODE_S_TYPE, "");
     }
 
     // SB-Type instructions
@@ -427,7 +427,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                                RISCV_CONSTANTS::FUNCT3_BEQ,
-                                               RISCV_CONSTANTS::OPCODE_SB_TYPE);
+                                               RISCV_CONSTANTS::OPCODE_SB_TYPE, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::BNE:
@@ -456,7 +456,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                                RISCV_CONSTANTS::FUNCT3_BNE,
-                                               RISCV_CONSTANTS::OPCODE_SB_TYPE);
+                                               RISCV_CONSTANTS::OPCODE_SB_TYPE, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::BLT:
@@ -486,7 +486,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                                RISCV_CONSTANTS::FUNCT3_BLT,
-                                               RISCV_CONSTANTS::OPCODE_SB_TYPE);
+                                               RISCV_CONSTANTS::OPCODE_SB_TYPE, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::BGE:
@@ -515,7 +515,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
                                                RISCV_CONSTANTS::FUNCT3_BGE,
-                                               RISCV_CONSTANTS::OPCODE_SB_TYPE);
+                                               RISCV_CONSTANTS::OPCODE_SB_TYPE, "");
     }
 
     // U-Type instructions
@@ -529,7 +529,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
 
         return std::make_unique<UInstruction>(imm,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_U_TYPE_LUI);
+                                              RISCV_CONSTANTS::OPCODE_U_TYPE_LUI, "");
     }
 
     case RISCV_CONSTANTS::INSTRUCTIONS::AUIPC:
@@ -542,7 +542,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
 
         return std::make_unique<UInstruction>(imm,
                                               RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                              RISCV_CONSTANTS::OPCODE_U_TYPE_AUIPC);
+                                              RISCV_CONSTANTS::OPCODE_U_TYPE_AUIPC, "");
     }
 
         // UJ-Type instruction (JAL) with range checking
@@ -572,7 +572,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
 
         return std::make_unique<UJInstruction>(offset,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
-                                               RISCV_CONSTANTS::OPCODE_UJ_TYPE_JAL);
+                                               RISCV_CONSTANTS::OPCODE_UJ_TYPE_JAL, "");
     }
 
     default:

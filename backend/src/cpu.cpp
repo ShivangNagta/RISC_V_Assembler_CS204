@@ -10,12 +10,14 @@
 
 Step Cpu::currentStep = FETCH;
 
-Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), clock(0), memory(memory)
+Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), RZ(0), clock(0), memory(memory)
 {
     for (int i = 0; i < 32; i++)
     {
         registers[i] = 0;
     }
+    registers[2] = 0x7FFFFFDC;
+    registers[3] = 0x10000000;
 }
 
 void Cpu::fetch()
@@ -26,6 +28,8 @@ void Cpu::fetch()
         return;
     }
     IR = memory.instructionMemory[PC];
+
+    memory.comment = "[Fetch] Fetched instruction 0x" + std::to_string(IR) + " from address 0x" + std::to_string(PC);
     PC += 4;
     // std::cout << "[Fetch] PC: 0x" << std::hex << PC
     //           << " | Instruction: 0x" << IR << std::endl;
@@ -34,6 +38,12 @@ void Cpu::fetch()
 void Cpu::decode()
 {
     currentInstruction = decodeInstruction(IR);
+    if (!currentInstruction)
+    {
+        std::cerr << "[Decode] Error: Failed to decode instruction 0x" << std::hex << IR << "\n";
+        return;
+    }
+
     // std::cout << "[Decode] Decoding instruction: 0x" << std::hex << IR << std::endl;
 }
 
@@ -52,30 +62,62 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
     uint32_t rs1 = (instr >> 15) & 0x1F;
     uint32_t rs2 = (instr >> 20) & 0x1F;
     uint32_t funct7 = (instr >> 25) & 0x7F;
+    std::string instrName = "Unknown";
 
     // Decode based on opcode
-    switch (opcode) {
+    switch (opcode)
+    {
     case 0b0110011:
     { // R-format: add, and, or, sll, slt, sra, srl, sub, xor, mul, div, rem
-        return std::make_unique<RInstruction>(rd, rs1, rs2, funct3, funct7, opcode);
+
+        if (funct3 == 0b000 && funct7 == 0b0000000) instrName = "ADD";
+        else if (funct3 == 0b000 && funct7 == 0b0100000) instrName = "SUB";
+        else if (funct3 == 0b000 && funct7 == 0b0000001) instrName = "MUL";
+        else if (funct3 == 0b001 && funct7 == 0b0000000) instrName = "SLL";
+        else if (funct3 == 0b010 && funct7 == 0b0000000) instrName = "SLT";
+        else if (funct3 == 0b100 && funct7 == 0b0000000) instrName = "XOR";
+        else if (funct3 == 0b100 && funct7 == 0b0000001) instrName = "DIV";
+        else if (funct3 == 0b101 && funct7 == 0b0000000) instrName = "SRL";
+        else if (funct3 == 0b101 && funct7 == 0b0100000) instrName = "SRA";
+        else if (funct3 == 0b110 && funct7 == 0b0000000) instrName = "OR";
+        else if (funct3 == 0b110 && funct7 == 0b0000001) instrName = "REM";
+        else if (funct3 == 0b111 && funct7 == 0b0000000) instrName = "AND";
+
+        memory.comment = "[Decode] R-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", rd: x" + std::to_string(rd);
+
+        return std::make_unique<RInstruction>(rd, rs1, rs2, funct3, funct7, opcode, instrName);
     }
 
     case 0b0010011: // I-format arithmetic (addi, andi, ori)
     {
         int32_t imm = signExtend((instr >> 20) & 0xFFF, 12);
-        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode);
+        if (funct3 == 0b00) instrName = "ADDI";
+        else if (funct3 == 0b111) instrName = "ANDI";
+        else if (funct3 == 0b110) instrName = "ORI";
+        else instrName = "Unknown I-format arithmetic";
+        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
     case 0b0000011: // I-format load (lb, lh, lw, ld)
     {
         int32_t imm = signExtend((instr >> 20) & 0xFFF, 12);
-        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode);
+        if (funct3 == 0b000) instrName = "LB";
+        else if (funct3 == 0b001) instrName = "LH";
+        else if (funct3 == 0b010) instrName = "LW";
+        else if (funct3 == 0b011) instrName = "LD";
+        else instrName = "Unknown I-format load";
+        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
     case 0b1100111: // I-format JALR
     {
         int32_t imm = signExtend((instr >> 20) & 0xFFF, 12);
-        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode);
+        if (funct3 == 0b000) instrName = "JALR";
+        else instrName = "Unknown I-format JALR";
+        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
     case 0b0100011: // S-format (sb, sh, sw, sd)
@@ -84,7 +126,13 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
             ((instr >> 25) & 0x7F) << 5 |
                 ((instr >> 7) & 0x1F),
             12);
-        return std::make_unique<SInstruction>(imm, rs1, rs2, funct3, opcode);
+        if (funct3 == 0b000) instrName = "SB";
+        else if (funct3 == 0b001) instrName = "SH";
+        else if (funct3 == 0b010) instrName = "SW";
+        else if (funct3 == 0b011) instrName = "SD";
+        else instrName = "Unknown S-format";
+        memory.comment = "[Decode] S-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: x" + std::to_string(imm);
+        return std::make_unique<SInstruction>(imm, rs1, rs2, funct3, opcode, instrName);
     }
 
     case 0b1100011: // SB-format (beq, bne, bge, blt)
@@ -95,14 +143,25 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
                 ((instr >> 25) & 0x3F) << 5 |
                 ((instr >> 8) & 0xF) << 1,
             13);
-        return std::make_unique<SBInstruction>(imm, rs1, rs2, funct3, opcode);
+        if (funct3 == 0b000) instrName = "BEQ";
+        else if (funct3 == 0b001) instrName = "BNE";
+        else if (funct3 == 0b100) instrName = "BLT";
+        else if (funct3 == 0b101) instrName = "BGE";
+        else instrName = "Unknown SB-format";
+
+        memory.comment = "[Decode] SB-format instruction x" + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: " + std::to_string(imm);
+        return std::make_unique<SBInstruction>(imm, rs1, rs2, funct3, opcode, instrName);
     }
 
     case 0b0110111: // U-format LUI
     case 0b0010111: // U-format AUIPC
     {
         int32_t imm = (instr & 0xFFFFF000);
-        return std::make_unique<UInstruction>(imm, rd, opcode);
+        if (opcode == 0b0110111) instrName = "LUI";
+        else if (opcode == 0b0010111) instrName = "AUIPC";
+        else instrName = "Unknown U-format";
+        memory.comment = "[Decode] U-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        return std::make_unique<UInstruction>(imm, rd, opcode, instrName);
     }
 
     case 0b1101111: // UJ-format JAL
@@ -113,7 +172,9 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
                 ((instr >> 20) & 0x1) << 11 |
                 ((instr >> 21) & 0x3FF) << 1,
             21);
-        return std::make_unique<UJInstruction>(imm, rd, opcode);
+        instrName = "JAL";
+        memory.comment = "[Decode] UJ-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        return std::make_unique<UJInstruction>(imm, rd, opcode, instrName);
     }
 
     default:
@@ -129,47 +190,52 @@ void Cpu::execute()
 
 void Cpu::memory_update()
 {
-    if (!currentInstruction) {
+    if (!currentInstruction)
+    {
         std::cerr << "[Memory] Error: No instruction to execute\n";
         return;
     }
-    
+
     // std::cout << "[Memory] Processing memory stage for instruction: 0x" << std::hex << IR << std::endl;
-    
+
     // Let the instruction handle its own memory operations
     currentInstruction->memory_update(*this);
 }
 
 void Cpu::write_back()
 {
-    if (!currentInstruction) {
+    if (!currentInstruction)
+    {
         std::cerr << "[Write Back] Error: No instruction to execute\n";
         return;
     }
     // std::cout << "[Write Back] Writing results to registers." << std::endl;
     currentInstruction->writeback(*this);
-
 }
 
 void Cpu::step()
 {
-    
+
     switch (currentStep)
     {
     case FETCH:
         fetch();
+        clock++;
         currentStep = DECODE;
         break;
     case DECODE:
         decode();
+        clock++;
         currentStep = EXECUTE;
         break;
     case EXECUTE:
         execute();
+        clock++;
         currentStep = MEMORY;
         break;
     case MEMORY:
         memory_update();
+        clock++;
         currentStep = WRITEBACK;
         break;
     case WRITEBACK:
@@ -195,26 +261,34 @@ void Cpu::run()
     // std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
 }
 
-void Cpu::dumpRegisters() {
+void Cpu::dumpRegisters()
+{
     bool first = true;
-    for (int i = 0; i < 32; i++) {
-        if (registers[i] != 0) {
-            if (!first) std::cout << ",";
+    for (int i = 0; i < 32; i++)
+    {
+        if (registers[i] != 0)
+        {
+            if (!first)
+                std::cout << ",";
             std::cout << "\"x" << i << "\": " << registers[i];
             first = false;
         }
     }
 }
 
-void Cpu::reset() {
+void Cpu::reset()
+{
     for (int i = 0; i < 32; i++)
     {
         registers[i] = 0;
     }
+    registers[2] = 0x7FFFFFDC;
+    registers[3] = 0x10000000;
     PC = 0;
     IR = 0;
     RM = 0;
     RY = 0;
+    RZ = 0;
     clock = 0;
     memory.reset();
 }

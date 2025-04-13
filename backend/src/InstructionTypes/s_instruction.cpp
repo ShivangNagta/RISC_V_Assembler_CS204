@@ -62,16 +62,18 @@ void SInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] SD: Storing doubleword from x" << rs2 << " (" << value 
         //           << ") to address " << addr << std::endl;
     }
+
+    cpu.memory.comment = "[Execute] S-format instruction " + instrName + " executed. Effective address: " + std::to_string(addr) + ", Value to store: " + std::to_string(value);
 }
 
 void SInstruction::memory_update(Cpu& cpu) const {
-    Memory memory;
+    // Memory memory;
     uint32_t addr = cpu.RM;  // Address calculated in execute stage
     int32_t value = cpu.RY;  // Value to store (from rs2)
     
     // Perform the store based on funct3
     if (funct3 == 0b000) {  // sb (store byte)
-        memory.dataMemory[addr] = value & 0xFF;
+        cpu.memory.dataMemory[addr] = value & 0xFF;
         std::cout << "[Memory] SB: Stored byte " << (value & 0xFF) 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -82,8 +84,8 @@ void SInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        memory.dataMemory[addr] = value & 0xFF;
-        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        cpu.memory.dataMemory[addr] = value & 0xFF;
+        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
         std::cout << "[Memory] SH: Stored halfword " << (value & 0xFFFF) 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -94,10 +96,10 @@ void SInstruction::memory_update(Cpu& cpu) const {
             return;
         }
         
-        memory.dataMemory[addr] = value & 0xFF;
-        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+        cpu.memory.dataMemory[addr] = value & 0xFF;
+        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+        cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
         std::cout << "[Memory] SW: Stored word " << value 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -109,15 +111,15 @@ void SInstruction::memory_update(Cpu& cpu) const {
         }
         
         // For simplicity, we'll just store the lower 32 bits
-        memory.dataMemory[addr] = value & 0xFF;
-        memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+        cpu.memory.dataMemory[addr] = value & 0xFF;
+        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+        cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
         // Zero out the upper 32 bits
-        memory.dataMemory[addr + 4] = 0;
-        memory.dataMemory[addr + 5] = 0;
-        memory.dataMemory[addr + 6] = 0;
-        memory.dataMemory[addr + 7] = 0;
+        cpu.memory.dataMemory[addr + 4] = 0;
+        cpu.memory.dataMemory[addr + 5] = 0;
+        cpu.memory.dataMemory[addr + 6] = 0;
+        cpu.memory.dataMemory[addr + 7] = 0;
         std::cout << "[Memory] SD: Stored lower 32 bits " << value 
                   << " to address 0x" << std::hex << addr << std::endl;
     }
@@ -125,7 +127,6 @@ void SInstruction::memory_update(Cpu& cpu) const {
 
 void SInstruction::writeback(Cpu& cpu) const {
     // Store instructions don't write back to a register
-    std::cout << "[Writeback] Store: No register writeback" << std::endl;
-    // cpu.PC += 4;  // Increment PC
+    cpu.memory.comment = "[Writeback] Store instruction. No register writeback.";
 }
 

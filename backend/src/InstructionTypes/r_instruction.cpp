@@ -83,6 +83,8 @@ void RInstruction::execute(Cpu& cpu) const {
             // div
             if (rs2_val == 0) {
                 result = -1;  // Division by zero
+                cpu.memory.comment = "[Execute] DIV: Division by zero error";
+                return;
                 // std::cout << "[Execute] DIV: Division by zero error" << std::endl;
             } else {
                 result = rs1_val / rs2_val;
@@ -116,6 +118,7 @@ void RInstruction::execute(Cpu& cpu) const {
             // rem
             if (rs2_val == 0) {
                 result = rs1_val;  // Remainder with division by zero
+                cpu.memory.comment = "[Execute] REM: Division by zero error";
                 // std::cout << "[Execute] REM: Division by zero error" << std::endl;
             } else {
                 result = rs1_val % rs2_val;
@@ -123,6 +126,7 @@ void RInstruction::execute(Cpu& cpu) const {
                 //           << " (" << rs1_val << " % " << rs2_val << " = " << result << ")" << std::endl;
             }
         }
+
     }
     else if (funct3 == 0b111 && funct7 == 0b0000000) {
         // and
@@ -130,14 +134,22 @@ void RInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] AND: x" << rd << " = x" << rs1 << " & x" << rs2 
         //           << " (" << rs1_val << " & " << rs2_val << " = " << result << ")" << std::endl;
     }
+
     else {
+        cpu.memory.comment = "[Execute] Unknown R-type instruction: funct3=" + std::to_string(funct3) + ", funct7=" + std::to_string(funct7);
         // std::cout << "[Execute] Unknown R-type instruction: funct3=" << funct3 << ", funct7=" << funct7 << std::endl;
     }
+
+    cpu.memory.comment = "[Execute] R-type instruction " + instrName + " executed and result stored in x" + std::to_string(rd) + ": " + std::to_string(result);
+}
+
+void RInstruction::memory_update(Cpu& cpu) const {
+    // No memory update for R-type instructions
+    cpu.memory.comment = "[Memory] No memory update for R-type instruction " + instrName;
 }
 
 void RInstruction::writeback(Cpu& cpu) const {
     cpu.registers[rd] = cpu.RY;
-    std::cout << "[Writeback] R-type: Writing " << cpu.RY << " to x" << rd << std::endl;
-   // cpu.PC += 4;  // Increment PC
+    cpu.memory.comment = "[Writeback] R-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
 }
 

@@ -16,6 +16,7 @@ public:
     std::unordered_map<uint32_t, uint32_t> instructionMemory;
     std::unordered_map<uint32_t, uint8_t> dataMemory;
     std::unordered_map<uint32_t, uint8_t> stackMemory;
+    std::string comment;
 
     void storeInstruction(uint32_t address, uint32_t machineCode);
     void storeData(uint32_t address, uint8_t value);
@@ -28,6 +29,7 @@ public:
     void dumpMemory();
     void dumpInstructions();
     void dumpStack();
+    void dumpComments();
 
     void reset();
 };
