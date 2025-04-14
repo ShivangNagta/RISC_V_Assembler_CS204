@@ -1,0 +1,1 @@
+{"input_code":".data\nhello: .word 10, 20\n.text\n_start:\n    addi x5, x0, 0\n    addi x6, x0, 1\n    addi x7, x0, 10\n    beq x0, x0, exit\nexit:\n exit x0"}

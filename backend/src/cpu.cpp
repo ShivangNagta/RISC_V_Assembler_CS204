@@ -29,6 +29,7 @@ void Cpu::fetch()
         std::cerr << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
         return;
     }
+
     IR = memory.instructionMemory[PC];
 
     std::stringstream ss;
@@ -91,7 +92,7 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
 
         memory.comment = "[Decode] R-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", rd: x" + std::to_string(rd);
 
-        return std::make_unique<RInstruction>(rd, rs1, rs2, funct3, funct7, opcode, instrName);
+        return std::make_unique<RInstruction>(funct7, rs2, rs1, funct3, rd, opcode, instrName);
     }
 
     case 0b0010011: // I-format arithmetic (addi, andi, ori)
@@ -138,7 +139,7 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b011) instrName = "SD";
         else instrName = "Unknown S-format";
         memory.comment = "[Decode] S-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: x" + std::to_string(imm);
-        return std::make_unique<SInstruction>(imm, rs1, rs2, funct3, opcode, instrName);
+        return std::make_unique<SInstruction>(imm, rs2, rs1, funct3, opcode, instrName);
     }
 
     case 0b1100011: // SB-format (beq, bne, bge, blt)
@@ -156,7 +157,7 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else instrName = "Unknown SB-format";
 
         memory.comment = "[Decode] SB-format instruction x" + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: " + std::to_string(imm);
-        return std::make_unique<SBInstruction>(imm, rs1, rs2, funct3, opcode, instrName);
+        return std::make_unique<SBInstruction>(imm, rs2, rs1, funct3, opcode, instrName);
     }
 
     case 0b0110111: // U-format LUI
@@ -221,10 +222,16 @@ void Cpu::write_back()
 
 void Cpu::step()
 {
-
     switch (currentStep)
     {
     case FETCH:
+        if (PC == memory.exitAddress) {
+            std::stringstream ss;
+            ss << "Successfully Exited";
+            memory.comment = ss.str();
+            currentStep = DECODE;
+            return;
+        }
         fetch();
         clock++;
         currentStep = DECODE;
@@ -257,15 +264,16 @@ void Cpu::run()
 {
     while (memory.instructionMemory.find(PC) != memory.instructionMemory.end())
     {
-        step();
-        step();
-        step();
-        step();
-        step();
+    
+        for (int i = 0; i < 5; ++i) {
+            if (memory.comment == "Successfully Exited") return;
+            step();
+        }
         currentStep = FETCH;
     }
     // std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
 }
+
 
 void Cpu::dumpRegisters()
 {
@@ -276,7 +284,7 @@ void Cpu::dumpRegisters()
         {
             if (!first)
                 std::cout << ",";
-            std::cout << "\"x" << i << "\": \"" << registers[i] << "\"";
+            std::cout << "\"x" << std::dec << i << "\": \"0x" << std::hex << std::setw(8) << std::setfill('0') << registers[i] << "\"";
             first = false;
         }
     }

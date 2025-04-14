@@ -13,32 +13,52 @@ export default function App() {
   const [editorContent, setEditorContent] = useState(`#Default
 
 .data
- hello: .word 10, 20
+.word 6
 
 .text
 
 _start:
-    # Initialize Fibonacci sequence
-    addi x0, x5, 0      # F(0) = 0
-    addi x0, x6, 1      # F(1) = 1
-    addi x0, x7, 10     # Set n (change this value for more terms)
-    
-    add x10, x5, x0  # Copy F(0) to x10
-    add x11, x6, x0  # Copy F(1) to x11
+        # Load n from memory (assume at address 0x10010000)
+        lui     x16, 0x10000       # x16 = upper part of 0x10010000
+        lw      x10, 0(x16)        # x10 = n
+
+        # Initialize fib(0) = 0, fib(1) = 1
+        addi    x11, x0, 1         # fib(i-1) = 1
+        addi    x12, x0, 0         # fib(i-2) = 0
+        addi    x13, x0, 2         # i = 2
+
+        # Memory pointer for storing results (0x10010004)
+        addi    x15, x16, 4
+        sw      x12, 0(x15)        # store fib(0)
+        sw      x11, 4(x15)        # store fib(1)
+
+        # Preload shift constant for sll (left shift by 2 = multiply by 4)
+        addi    x20, x0, 2         # x20 = shift amount
+
+        # if n <= 2, skip loop
+        addi    x17, x0, 2
+        bge     x17, x10, done     # if n <= 2, jump to done
 
 loop:
-    beq x7, x0, done  # If n == 0, exit
-    add x12, x10, x11 # F(n) = F(n-1) + F(n-2)
-    
-    # Shift values for the next iteration
-    add x10, x11, x0  # F(n-1) becomes F(n-2)
-    add x11, x12, x0  # F(n) becomes F(n-1)
-    
-    addi x7, x7, -1   # Decrement counter
-    jal ra, loop      # Repeat
+        add     x14, x11, x12      # fib(i) = fib(i-1) + fib(i-2)
+
+        # Calculate offset = i * 4 using sll
+        sll     x18, x13, x20      # x18 = i << 2
+        add     x19, x15, x18      # x19 = memory address to store fib(i)
+        sw      x14, 0(x19)        # store fib(i)
+
+        # Update fib(i-2) = fib(i-1), fib(i-1) = fib(i)
+        addi    x12, x11, 0        # x12 = previous x11
+        addi    x11, x14, 0        # x11 = new fib(i)
+
+        addi    x13, x13, 1        # i++
+
+        blt     x13, x10, loop     # if i < n, continue
 
 done:
-    jal ra, done      # Infinite loop (halt simulation)`);
+        exit x0     # infinite loop to end program
+
+    `);
 
   const assembleCode = async () => {
     setLoading(true);
@@ -233,6 +253,25 @@ done:
           </div>
         </div>
       )}
+
+{error && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+    <div className="bg-gray-900/90 border border-gray-700 text-red-400 rounded-lg shadow-xl p-6 max-w-md w-full">
+      <h2 className="text-lg font-semibold mb-2 text-red-500">Error</h2>
+      <p className="mb-4 whitespace-pre-wrap text-sm">{error}</p>
+      <button
+        onClick={() => setError("")}
+        className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-1 rounded text-sm"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
+
+
+
+
     </div>
 
   );

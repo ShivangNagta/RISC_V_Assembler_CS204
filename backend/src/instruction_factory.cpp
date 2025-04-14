@@ -481,7 +481,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
         // Validate branch offset
         validateBranchOffset(offset, "blt");
 
-        cout << "offset: " << offset << endl;
+        // cout << "offset: " << offset << endl;
         return std::make_unique<SBInstruction>(offset,
                                                RISCV_CONSTANTS::REGISTERS.at(operands[1]),
                                                RISCV_CONSTANTS::REGISTERS.at(operands[0]),
@@ -522,7 +522,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
     case RISCV_CONSTANTS::INSTRUCTIONS::LUI:
     {
         int32_t imm = std::stoi(operands[1], nullptr, 0);
-        cout << "imm: " << imm << endl;
+        // cout << "imm: " << imm << endl;
 
         // range check
         validateUTypeImmediateRange(imm, "lui");
@@ -535,7 +535,7 @@ std::unique_ptr<Instruction> InstructionFactory::create(const std::string &inst,
     case RISCV_CONSTANTS::INSTRUCTIONS::AUIPC:
     {
         int32_t imm = std::stoi(operands[1], nullptr, 0);
-        cout << "imm: " << imm << endl;
+        // cout << "imm: " << imm << endl;
 
         // range check
         validateUTypeImmediateRange(imm, "auipc");

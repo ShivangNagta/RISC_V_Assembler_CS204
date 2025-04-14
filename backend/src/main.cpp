@@ -66,7 +66,7 @@ void stepAndOutput() {
     memory.dumpStack();
     std::cout << "}, \"registers\": {";
     cpu.dumpRegisters();
-    std::cout << "}, \"clock_cycles\": " << cpu.clock << " ";
+    std::cout << "}, \"clock_cycles\": " << std::dec << cpu.clock << " ";
     std::cout << ", \"comment\": \"";
     memory.dumpComments();
     std::cout << "\" }" << std::endl;

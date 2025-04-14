@@ -8,6 +8,7 @@ Stores memory for text and data segment
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <limits>
 
 class Memory {
 
@@ -17,6 +18,7 @@ public:
     std::unordered_map<uint32_t, uint8_t> dataMemory;
     std::unordered_map<uint32_t, uint8_t> stackMemory;
     std::string comment;
+    uint32_t exitAddress;
 
     void storeInstruction(uint32_t address, uint32_t machineCode);
     void storeData(uint32_t address, uint8_t value);

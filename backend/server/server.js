@@ -37,7 +37,6 @@ app.post("/assemble", (req, res) => {
     } else {
         session = users.get(id);
     }
-    console.log("hello")
     session.output = ""; 
     session.child.stdin.write("assemble\n");
     // const cod = {
@@ -53,19 +52,20 @@ app.post("/assemble", (req, res) => {
 
 
     setTimeout(() => {
+        console.log(session.output)
         if (error) {
             res.status(400).json({ error: session.output });
         }else{
             try {
                 const assembledJSON = JSON.parse(session.output);
-                // console.log(assembledJSON)
+                console.log(assembledJSON)
                 res.json({
                     machine_code: assembledJSON.machine_code,
                     data_segment: assembledJSON.data_segment,
                     id,
                 });
             } catch (err) {
-                res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
+                res.status(500).json({ error: "Invalid output from assembler" });
             }
         }
     }, 1000);
@@ -84,8 +84,8 @@ app.post("/step", (req,res) => {
     // console.log(outputJSON)
 
     setTimeout(() => {
+        console.log(session.output)
         try {
-            console.log(session.output)
             const outputJSON = JSON.parse(session.output);
             console.log(outputJSON)
             res.json({
@@ -97,7 +97,7 @@ app.post("/step", (req,res) => {
                 comment: outputJSON.comment,
             });
         } catch (err) {
-            res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
+            res.status(500).json({ error: session.output });
         }
     }, 500);
     
@@ -112,8 +112,8 @@ app.post("/run", (req,res) => {
     session.child.stdin.write("run\n");
 
     setTimeout(() => {
+        console.log(session.output)
         try {
-            console.log(session.output)
             const outputJSON = JSON.parse(session.output);
             console.log(outputJSON)
             res.json({
@@ -125,7 +125,7 @@ app.post("/run", (req,res) => {
                 comment: "Finished",
             });
         } catch (err) {
-            res.status(500).json({ error: "Invalid output from assembler", raw: session.output });
+            res.status(500).json({ error: session.output });
         }
     }, 500);
     

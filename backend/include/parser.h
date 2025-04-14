@@ -21,6 +21,5 @@ public:
     
     void parse(std::string line, uint32_t &address,
         SymbolTable &symbols, bool firstPass,
-        std::map<uint32_t, std::unique_ptr<Instruction>> &machineCode,
         Memory& memory);
 };

@@ -5,7 +5,6 @@
 #include <iomanip>
 
 void Assembler::assemble(const std::string& input) {
-    std::map<uint32_t, std::unique_ptr<Instruction>> machineCode;
 
     uint32_t addr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
     bool inDataSegment = false;
@@ -15,7 +14,7 @@ void Assembler::assemble(const std::string& input) {
 
     // First pass: Parse labels
     while (std::getline(stream, line)) {
-        parser.parse(line, addr, symbols, true, machineCode, memory);
+        parser.parse(line, addr, symbols, true, memory);
     }
     // Reset stream for second pass
     stream.clear();
@@ -31,7 +30,7 @@ void Assembler::assemble(const std::string& input) {
             inDataSegment = false;
             addr = RISCV_CONSTANTS::TEXT_SEGMENT_START;
         }
-        parser.parse(line, addr, symbols, false, machineCode, memory);
+        parser.parse(line, addr, symbols, false, memory);
     }
 
     // Print JSON output

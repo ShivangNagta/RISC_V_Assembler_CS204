@@ -103,12 +103,13 @@ void IInstruction::memory_update(Cpu& cpu) const {
         return;
     }
     
-    uint32_t addr = cpu.RM;  // Address calculated in execute stage
+    uint32_t addr = cpu.RY;  // Address calculated in execute stage
     
     // Check if address is valid
     if (cpu.memory.dataMemory.find(addr) == cpu.memory.dataMemory.end()) {
         // std::cout << "[Memory] Warning: Address 0x" << std::hex << addr << " not found in memory\n";
         cpu.RY = 0;  // Default to 0 for non-existent memory
+        cpu.memory.comment = "Invalid address "+std::to_string(addr);
         return;
     }
     
@@ -122,10 +123,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
     }
     else if (funct3 == 0b001) {  // lh (load halfword)
         // Check alignment and sign-extend halfword
-        if (addr % 2 != 0) {
-            std::cout << "[Memory] Error: Unaligned halfword access at 0x" << std::hex << addr << std::endl;
-            return;
-        }
+        // if (addr % 2 != 0) {
+        //     std::cerr << "[Memory] Error: Unaligned halfword access at 0x" << std::hex << addr << std::endl;
+        //     return;
+        // }
         
         int16_t halfword = (cpu.memory.dataMemory[addr] & 0xFF) | 
                           ((cpu.memory.dataMemory[addr + 1] & 0xFF) << 8);
@@ -135,10 +136,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
     }
     else if (funct3 == 0b010) {  // lw (load word)
         // Check alignment
-        if (addr % 4 != 0) {
-            std::cout << "[Memory] Error: Unaligned word access at 0x" << std::hex << addr << std::endl;
-            return;
-        }
+        // if (addr % 4 != 0) {
+        //     std::cerr << "[Memory] Error: Unaligned word access at 0x" << std::hex << addr << std::endl;
+        //     return;
+        // }
         
         int32_t word = (cpu.memory.dataMemory[addr] & 0xFF) | 
                        ((cpu.memory.dataMemory[addr + 1] & 0xFF) << 8) |
@@ -150,10 +151,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
     }
     else if (funct3 == 0b011) {  // ld (load doubleword)
         // Check alignment
-        if (addr % 8 != 0) {
-            std::cerr << "[Memory] Error: Unaligned doubleword access at 0x" << std::hex << addr << std::endl;
-            return;
-        }
+        // if (addr % 8 != 0) {
+        //     std::cerr << "[Memory] Error: Unaligned doubleword access at 0x" << std::hex << addr << std::endl;
+        //     return;
+        // }
         
         // For simplicity, we'll just load the lower 32 bits
         int32_t word = (cpu.memory.dataMemory[addr] & 0xFF) | 
