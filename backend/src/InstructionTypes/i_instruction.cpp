@@ -170,10 +170,10 @@ void IInstruction::memory_update(Cpu& cpu) const {
 }
 
 void IInstruction::writeback(Cpu& cpu) const {
-    if (rd == 0) {
-        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
-        return;
-    }
+    // if (rd == 0) {
+    //     cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+    //     return;
+    // }
     if (op == 0b0000011) {  // Load instructions
         cpu.registers[rd] = cpu.RY;
         // std::cout << "[Writeback] Load: Writing " << cpu.RY << " to x" << rd << std::endl;
@@ -187,4 +187,5 @@ void IInstruction::writeback(Cpu& cpu) const {
         cpu.registers[rd] = cpu.RY;
         cpu.memory.comment = "[Writeback] I-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
     }
+    cpu.registers[0] = 0;
 }

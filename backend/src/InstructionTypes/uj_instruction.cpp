@@ -50,14 +50,16 @@ void UJInstruction::memory_update(Cpu& cpu) const {
 }
 
 void UJInstruction::writeback(Cpu& cpu) const {
-    if (rd == 0) {
-        // If rd is 0, do not write back the return address
-        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
-        return;
-    }
-    cpu.registers[rd] = cpu.PC + 4;  // Store return address
+    // if (rd == 0) {
+    //     // If rd is 0, do not write back the return address
+    //     cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+    //     return;
+    // }
+    cpu.registers[rd] = cpu.PC;  // Store return address
     cpu.PC = cpu.RM;  // Jump to target address
     // std::cout << "[Writeback] JAL: Writing return address " << cpu.registers[rd] 
     //           << " to x" << rd << ", jumping to " << cpu.PC << std::endl;
     cpu.memory.comment = "[Writeback] JAL: Writing return address " + std::to_string(cpu.registers[rd]) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
+    cpu.registers[0] = 0;
+
 }

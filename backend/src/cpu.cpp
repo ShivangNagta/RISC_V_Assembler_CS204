@@ -229,7 +229,6 @@ void Cpu::step()
             std::stringstream ss;
             ss << "Successfully Exited";
             memory.comment = ss.str();
-            currentStep = DECODE;
             return;
         }
         fetch();
@@ -264,7 +263,8 @@ void Cpu::run()
 {
     while (memory.instructionMemory.find(PC) != memory.instructionMemory.end())
     {
-    
+
+        
         for (int i = 0; i < 5; ++i) {
             if (memory.comment == "Successfully Exited") return;
             step();
