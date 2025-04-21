@@ -394,18 +394,18 @@ void Cpu::step()
                 numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
                 
                 // std::cout << "[Clock] Cycle: " << clock << "\n";
-                std::cout << "Bubbles: " << numberOfBubbles << "\n";
+                // std::cout << "Bubbles: " << numberOfBubbles << "\n";
                 
                 instructionMap["F"] = PC-4;
                 instructionMap["D"] = stalledInstruction? stalledInstruction->instructionPC : (decodedInstruction? decodedInstruction->instructionPC : 10000);
                 instructionMap["E"] = executedInstruction? executedInstruction->instructionPC : 10000;
                 instructionMap["M"] = memoryAccessedInstruction? memoryAccessedInstruction->instructionPC : 10000;
                 instructionMap["W"] = writebackedInstruction? writebackedInstruction->instructionPC : 10000;
-                for (auto& [key, value] : instructionMap) {
-                    // if (value == 10000) {
-                    std::cout << key << ": " << value << "\n";
-                    // }
-                }
+                // for (auto& [key, value] : instructionMap) {
+                //     // if (value == 10000) {
+                //     std::cout << key << ": " << value << "\n";
+                //     // }
+                // }
         }
     } else {
         // No pipelining
@@ -498,10 +498,10 @@ void Cpu::reset()
 std::string Cpu::dumpPipelineStages()
 {
     std::stringstream ss;
-    ss << "{ \"F\": " << std::hex << instructionMap["F"] << ", "
-       << "\"D\": " << std::hex << instructionMap["D"] << ", "
-       << "\"E\": " << std::hex << instructionMap["E"] << ", "
-       << "\"M\": " << std::hex << instructionMap["M"] << ", "
-       << "\"W\": " << std::hex << instructionMap["W"] << " }";
+    ss << "{ \"F\": "<< "\"" << "0x" << std::hex << std::setw(8) << std::setfill('0') << instructionMap["F"] << "\"" << ", "
+       << "\"D\": " << "\"" << "0x" << std::hex << std::setw(8) << std::setfill('0') << instructionMap["D"] << "\"" << ", "
+       << "\"E\": " << "\"" << "0x" << std::hex << std::setw(8) << std::setfill('0') << instructionMap["E"]  <<  "\"" << ", "
+       << "\"M\": " << "\"" << "0x" << std::hex << std::setw(8) << std::setfill('0') << instructionMap["M"] << "\"" << ", "
+       << "\"W\": " << "\"" << "0x" << std::hex << std::setw(8) << std::setfill('0') << instructionMap["W"] << "\"" << " }";
     return ss.str();
 }

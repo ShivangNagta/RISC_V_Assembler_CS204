@@ -4,6 +4,7 @@ import path from 'path'
 import { spawn } from 'child_process'
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
+import { pipeline } from 'stream';
 
 const app = express();
 app.use(express.json());
@@ -79,7 +80,7 @@ app.post("/step", (req,res) => {
     session.output = ""
     session.child.stdin.write("step\n");
 
-    // console.log(session.output)
+    console.log(session.output)
     // const outputJSON = JSON.parse(session.output);
     // console.log(outputJSON)
 
@@ -95,6 +96,9 @@ app.post("/step", (req,res) => {
                 registers: outputJSON.registers,
                 clock_cycles: outputJSON.clock_cycles,
                 comment: outputJSON.comment,
+                pipeline: outputJSON.pipeline,
+                data_forward: outputJSON.data_forward,
+                pipeline_status: outputJSON.pipeline_status
             });
         } catch (err) {
             res.status(500).json({ error: session.output });
@@ -123,12 +127,51 @@ app.post("/run", (req,res) => {
                 registers: outputJSON.registers,
                 clock_cycles: outputJSON.clock_cycles,
                 comment: "Finished",
+                pipeline: outputJSON.pipeline,
+                data_forward: outputJSON.data_forward,
+                pipeline_status: outputJSON.pipeline_status
             });
         } catch (err) {
             res.status(500).json({ error: session.output });
         }
     }, 500);
     
+})
+
+app.post("/pipeline", (req,res) => {
+    const isPipelineEnabled = req.query.pipelineEnabled === 'true'
+    console.log("Pipeline enabled:", isPipelineEnabled);
+    let { id } = req.body
+    if (!id || !users.has(id)) return res.status(400).json({ error: "Cannot run, you need to assemble first"})
+
+    const session = users.get(id)
+    session.output = ""
+    session.child.stdin.write("pipeline\n");
+
+    setTimeout(() => {
+        console.log(session.output)
+        try {
+            const outputJSON = JSON.parse(session.output);
+            console.log(outputJSON)
+            res.json({
+                data_segment: outputJSON.data_segment,
+                instruction_memory: outputJSON.instruction_memory,
+                stack: outputJSON.stack,
+                registers: outputJSON.registers,
+                clock_cycles: outputJSON.clock_cycles,
+                comment: outputJSON.comment,
+                pipeline: outputJSON.pipeline,
+                data_forward: outputJSON.data_forward
+            });
+        } catch (err) {
+            res.status(500).json({ error: session.output });
+        }
+    }, 500);
+})
+
+app.post("/dataForward", (req,res) => {
+    const isEnabled = req.query.dataForwardingEnabled === 'true'
+    console.log("Data Forwarding enabled:", isEnabled);
 })
 
 app.listen(3000, () => console.log("Server running on port 3000"));

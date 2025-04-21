@@ -10,6 +10,9 @@ export default function App() {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [pipelineEnabled, setPipelineEnabled] = useState(false);
+  const [dataForwardingEnabled, setDataForwardingEnabled] = useState(false);
+  const [pipelineInstructions, setPipelineInstructions] = useState({})
   const [editorContent, setEditorContent] = useState(`#Default
 
 .data
@@ -58,7 +61,7 @@ loop:
 done:
         exit x0     # infinite loop to end program
 
-    `);
+`);
 
   const assembleCode = async () => {
     setLoading(true);
@@ -94,6 +97,7 @@ done:
       setRegisters(response.data.registers);
       setClockCycles(response.data.clock_cycles);
       setComment(response.data.comment);
+      setPipelineInstructions(response.data.pipeline_status)
     } catch (err) {
       setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
@@ -113,30 +117,44 @@ done:
     }
   };
 
+  const togglePipeline = async () => {
+    const newValue = !pipelineEnabled;
+    const id = localStorage.getItem("id") ?? ""
+    if (newValue === false && dataForwardingEnabled === true) toggleDataForwarding()
+    console.log(newValue)
+    setPipelineEnabled(newValue);
+    const response = await axios.post(`http://localhost:3000/pipeline?pipelineEnabled=${newValue}`, { id });
+  };
+
+  const toggleDataForwarding = async () => {
+    const id = localStorage.getItem("id") ?? "";
+    const newValue = !dataForwardingEnabled;
+    setDataForwardingEnabled(newValue);
+    const response = await axios.post(`http://localhost:3000/dataForward/?dataForwardingEnabled=${newValue}`, { id });
+  };
+
+  const stageColor = {
+    F: "bg-purple-700",
+    D: "bg-yellow-700",
+    E: "bg-red-700",
+    M: "bg-green-700",
+    W: "bg-pink-700",
+  };
+
   const [activeTab, setActiveTab] = useState("simulator");
   const [rightTab, setRightTab] = useState("registers");
 
   return (
     <div className="p-4 w-full h-screen flex flex-col bg-black text-gray-200 font-mono overflow-hidden">
-      {/* Tabs */}
       <div className="flex flex-wrap justify-center md:w-2/3 border-b border-gray-700 mb-4 mx-auto">
-        <div
-          onClick={() => setActiveTab("editor")}
-          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "editor" ? "bg-gray-800" : "bg-gray-900"
-            }`}
-        >
+        <div onClick={() => setActiveTab("editor")} className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "editor" ? "bg-gray-800" : "bg-gray-900"}`}>
           Editor
         </div>
-        <div
-          onClick={() => setActiveTab("simulator")}
-          className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "simulator" ? "bg-gray-800" : "bg-gray-900"
-            }`}
-        >
+        <div onClick={() => setActiveTab("simulator")} className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "simulator" ? "bg-gray-800" : "bg-gray-900"}`}>
           Simulator
         </div>
       </div>
 
-      {/* Editor Area */}
       {activeTab === "editor" ? (
         <textarea
           className="w-full h-full bg-gray-900 p-3 text-green-400 border border-gray-700 text-sm md:text-base resize-none"
@@ -145,50 +163,60 @@ done:
           placeholder="Write your RISC-V code here..."
         />
       ) : (
-        // Simulator Layout
         <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
-          {/* Left Simulator Panel */}
           <div className="w-full md:w-2/3 border-r border-gray-700 p-2 flex flex-col h-full">
-            {/* Buttons */}
             <div className="flex flex-wrap justify-center gap-2 bg-gray-900 p-2 sticky top-0 z-10">
-              <button onClick={handleStep} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
-                Step
-              </button>
-              <button onClick={handleRun} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
-                Run
-              </button>
-              <button onClick={handleReset} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">
-                Reset
-              </button>
+              <button onClick={handleStep} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Step</button>
+              <button onClick={handleRun} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Run</button>
+              <button onClick={handleReset} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Reset</button>
+              <button onClick={assembleCode} className="px-3 py-1 bg-purple-700 hover:bg-purple-600 rounded text-white text-sm">Assemble</button>
               <button
-                onClick={assembleCode}
-                className="px-3 py-1 bg-indigo-700 hover:bg-indigo-600 rounded text-white text-sm"
-              >
-                Assemble
+                onClick={togglePipeline}
+                className={`px-3 py-1 rounded text-sm ${pipelineEnabled ? "bg-green-700" : "bg-gray-700"}`}>
+                Pipeline {pipelineEnabled ? "On" : "Off"}
               </button>
+
+              <button
+                onClick={toggleDataForwarding}
+                disabled={!pipelineEnabled}
+                className={`px-3 py-1 rounded text-sm 
+    ${pipelineEnabled
+                    ? (dataForwardingEnabled ? "bg-green-700" : "bg-gray-700")
+                    : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                  }`}>
+                Forwarding {dataForwardingEnabled ? "On" : "Off"}
+              </button>
+
             </div>
 
-            {/* Machine Code Table */}
             <div className="overflow-auto flex-grow border border-gray-700">
               <table className="w-full text-center text-sm border-collapse">
                 <thead className="sticky top-0 bg-gray-800">
                   <tr className="border-b border-gray-700">
                     <th className="p-2">PC</th>
                     <th className="p-2">Machine Code</th>
+                    <th className="p-2">Stage</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {machineCode.map((inst, index) => (
-                    <tr key={index} className="border-b border-gray-800">
+                {machineCode.map((inst, index) => {
+                const currentStage = Object.entries(pipelineInstructions).find(
+                    ([stage, pc]) => pc === inst.pc && pc !== "0x00002710"
+                  )?.[0]; // returns the stage name like 'F', 'D', etc.
+
+                  return (
+                    <tr key={index} className={`${stageColor[currentStage] || "bg-gray-900"} border-b border-gray-800`}>
                       <td className="p-2">{inst.pc}</td>
                       <td className="p-2">{inst.machineCode}</td>
+                      <td className="p-2 capitalize">{currentStage || '-'}</td>
                     </tr>
-                  ))}
+                  );
+                })}
+
                 </tbody>
               </table>
             </div>
 
-            {/* Console Output */}
             <div className="mt-2 bg-black text-lime-400 p-2 border-t border-l border-r border-gray-700 rounded-b h-10 overflow-auto text-sm">
               <strong className="text-gray-400">Clock Cycles : {clockCycles}</strong>
             </div>
@@ -198,81 +226,41 @@ done:
             </div>
           </div>
 
-          {/* Right Memory/Register Panel */}
           <div className="w-full md:w-1/3 p-2 flex flex-col h-full border-l border-gray-700">
-            {/* Tabs */}
             <div className="flex border-b border-gray-700 justify-center mb-2">
-              <div
-                onClick={() => setRightTab("registers")}
-                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "registers" ? "bg-gray-800" : "bg-gray-900"
-                  }`}
-              >
-                Registers
-              </div>
-              <div
-                onClick={() => setRightTab("memory")}
-                className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "memory" ? "bg-gray-800" : "bg-gray-900"
-                  }`}
-              >
-                Memory
-              </div>
+              <div onClick={() => setRightTab("registers")} className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "registers" ? "bg-gray-800" : "bg-gray-900"}`}>Registers</div>
+              <div onClick={() => setRightTab("memory")} className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "memory" ? "bg-gray-800" : "bg-gray-900"}`}>Memory</div>
             </div>
-
-            {/* Right Tab Content */}
             <div className="overflow-auto max-h-screen border border-gray-700 p-2 text-sm">
-              {rightTab === "registers" ? (
-                Object.entries(registers).map(([name, value], i) => (
+              {rightTab === "registers"
+                ? Object.entries(registers).map(([name, value], i) => (
                   <div key={i} className="flex justify-between border-b border-gray-700 py-1">
                     <span>{name}</span>
                     <span>{value}</span>
                   </div>
                 ))
-              ) : (
-                <>
-                  <div className="mb-3">
-                    <h2 className="text-gray-400">Stack</h2>
+                : (
+                  <>
+                    <h2 className="text-gray-400 mb-1">Stack</h2>
                     {Object.entries(stack).map(([addr, value], i) => (
                       <div key={i} className="flex justify-between border-b border-gray-700 py-1">
                         <span>{addr}</span>
                         <span>{value}</span>
                       </div>
                     ))}
-                  </div>
-                  <div>
-                    <h2 className="text-gray-400">Data Segment</h2>
+                    <h2 className="text-gray-400 mt-3 mb-1">Data Segment</h2>
                     {Object.entries(dataSegment).map(([addr, value], i) => (
                       <div key={i} className="flex justify-between border-b border-gray-700 py-1">
                         <span>{addr}</span>
                         <span>{value}</span>
                       </div>
                     ))}
-                  </div>
-                </>
-              )}
+                  </>
+                )}
             </div>
           </div>
         </div>
       )}
-
-{error && (
-  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-    <div className="bg-gray-900/90 border border-gray-700 text-red-400 rounded-lg shadow-xl p-6 max-w-md w-full">
-      <h2 className="text-lg font-semibold mb-2 text-red-500">Error</h2>
-      <p className="mb-4 whitespace-pre-wrap text-sm">{error}</p>
-      <button
-        onClick={() => setError("")}
-        className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-1 rounded text-sm"
-      >
-        OK
-      </button>
     </div>
-  </div>
-)}
-
-
-
-
-    </div>
-
   );
 }
