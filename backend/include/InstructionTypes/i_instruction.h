@@ -22,5 +22,7 @@ public:
 
     uint32_t getOpcode() const override;
     uint32_t getFunct3() const override;
+    uint32_t getRD() const override;
+    uint32_t getRS1() const override;
 
 };

@@ -27,6 +27,14 @@ uint32_t IInstruction::getOpcode() const {
     return op;
 }
 
+uint32_t IInstruction::getRD() const {
+    return rd;
+};
+
+uint32_t IInstruction::getRS1() const {
+    return rs1;
+};
+
 uint32_t IInstruction::getFunct3() const {
     return funct3;
 }

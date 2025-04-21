@@ -17,4 +17,5 @@ public:
     void writeback(Cpu& cpu) const override;
 
     uint32_t getOpcode() const override;
+    uint32_t getRD() const override;
 };

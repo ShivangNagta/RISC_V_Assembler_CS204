@@ -12,31 +12,50 @@
 
 Step Cpu::currentStep = FETCH;
 
-Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), RZ(0), clock(0), memory(memory)
+Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), RZ(0), clock(0), memory(memory), data_forward(false), pipeline(false), numberOfBubbles(0),
+                           decodedInstruction(nullptr), executedInstruction(nullptr), memoryAccessedInstruction(nullptr), writebackedInstruction(nullptr) 
 {
     for (int i = 0; i < 32; i++)
     {
         registers[i] = 0;
     }
+    for (int i = 0; i < 5; i++)
+    {
+        rdVec.push_back(33);
+    }
     registers[2] = 0x7FFFFFDC;
     registers[3] = 0x10000000;
 }
+
+
 
 void Cpu::fetch()
 {
     if (memory.instructionMemory.find(PC) == memory.instructionMemory.end())
     {
+        if (pipeline) {
+            std::stringstream ss;
+            ss << "Nothing to fetch";
+            memory.comment = ss.str();
+            IR = 0;
+            return;
+        }
         std::cerr << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
         return;
     }
+    
 
     IR = memory.instructionMemory[PC];
 
     std::stringstream ss;
     ss << "[Fetch] Fetched instruction 0x" << std::setw(8) << std::setfill('0') << std::hex << std::uppercase << IR
        << " from address 0x" << std::setw(8) << std::setfill('0') << std::hex << std::uppercase << PC;
-    memory.comment = ss.str();
-    
+
+    if(pipeline) {
+        memory.pipelineComments.push_back(ss.str());
+    } else {
+        memory.comment = ss.str();
+    }
     PC += 4;
     // std::cout << "[Fetch] PC: 0x" << std::hex << PC
     //           << " | Instruction: 0x" << IR << std::endl;
@@ -44,11 +63,38 @@ void Cpu::fetch()
 
 void Cpu::decode()
 {
-    currentInstruction = decodeInstruction(IR);
+    currentInstruction = decodeInstructionFun(IR);
     if (!currentInstruction)
     {
         std::cerr << "[Decode] Error: Failed to decode instruction 0x" << std::hex << IR << "\n";
         return;
+    }
+    if (pipeline) {
+        decodedInstruction = std::move(currentInstruction);
+        if (rdVec.size() == 5) {
+            rdVec.erase(rdVec.begin());
+        }
+        rdVec.push_back(decodedInstruction->getRD());
+        //Dependency Check
+        uint32_t rs1 = decodedInstruction->getRS1();
+        uint32_t rs2 = decodedInstruction->getRS2();
+        for (int i = 0; i < 5; ++i) {
+            // check rs1
+            if (rs1 != 32 && rs1 == rdVec[i]) {
+                switch (i)
+                {
+                case 2:
+                    numberOfBubbles = 1;
+                    break;
+                case 3:
+                    numberOfBubbles = 2;
+                    break;
+                default:
+                    continue;
+                }
+            }
+        }
+        IR = 0;
     }
 
     // std::cout << "[Decode] Decoding instruction: 0x" << std::hex << IR << std::endl;
@@ -60,7 +106,7 @@ int32_t Cpu::signExtend(uint32_t value, uint32_t bits)
     return (value ^ mask) - mask;
 }
 
-std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
+std::unique_ptr<Instruction> Cpu::decodeInstructionFun(uint32_t instr)
 {
     // Extract fields
     uint32_t opcode = instr & 0x7F;
@@ -70,6 +116,8 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
     uint32_t rs2 = (instr >> 20) & 0x1F;
     uint32_t funct7 = (instr >> 25) & 0x7F;
     std::string instrName = "Unknown";
+
+    std::string comment;
 
     // Decode based on opcode
     switch (opcode)
@@ -90,8 +138,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b110 && funct7 == 0b0000001) instrName = "REM";
         else if (funct3 == 0b111 && funct7 == 0b0000000) instrName = "AND";
 
-        memory.comment = "[Decode] R-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", rd: x" + std::to_string(rd);
-
+        comment = "[Decode] R-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", rd: x" + std::to_string(rd);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<RInstruction>(funct7, rs2, rs1, funct3, rd, opcode, instrName);
     }
 
@@ -102,7 +154,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b111) instrName = "ANDI";
         else if (funct3 == 0b110) instrName = "ORI";
         else instrName = "Unknown I-format arithmetic";
-        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
@@ -114,7 +171,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b010) instrName = "LW";
         else if (funct3 == 0b011) instrName = "LD";
         else instrName = "Unknown I-format load";
-        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
@@ -123,7 +185,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         int32_t imm = signExtend((instr >> 20) & 0xFFF, 12);
         if (funct3 == 0b000) instrName = "JALR";
         else instrName = "Unknown I-format JALR";
-        memory.comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] I-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<IInstruction>(imm, rs1, funct3, rd, opcode, instrName);
     }
 
@@ -138,7 +205,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b010) instrName = "SW";
         else if (funct3 == 0b011) instrName = "SD";
         else instrName = "Unknown S-format";
-        memory.comment = "[Decode] S-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: x" + std::to_string(imm);
+        comment = "[Decode] S-format instruction " + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: x" + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<SInstruction>(imm, rs2, rs1, funct3, opcode, instrName);
     }
 
@@ -156,7 +228,12 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         else if (funct3 == 0b101) instrName = "BGE";
         else instrName = "Unknown SB-format";
 
-        memory.comment = "[Decode] SB-format instruction x" + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] SB-format instruction x" + instrName + " with rs1: x" + std::to_string(rs1) + ", rs2: x" + std::to_string(rs2) + ", imm: " + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
         return std::make_unique<SBInstruction>(imm, rs2, rs1, funct3, opcode, instrName);
     }
 
@@ -167,7 +244,13 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
         if (opcode == 0b0110111) instrName = "LUI";
         else if (opcode == 0b0010111) instrName = "AUIPC";
         else instrName = "Unknown U-format";
-        memory.comment = "[Decode] U-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] U-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
+        
         return std::make_unique<UInstruction>(imm, rd, opcode, instrName);
     }
 
@@ -180,7 +263,14 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
                 ((instr >> 21) & 0x3FF) << 1,
             21);
         instrName = "JAL";
-        memory.comment = "[Decode] UJ-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        comment = "[Decode] UJ-format instruction " + instrName + " with rd: x" + std::to_string(rd) + ", imm: " + std::to_string(imm);
+        
+        if(pipeline) {
+            memory.pipelineComments.push_back(comment);
+        } else {
+            memory.comment = comment;
+        }
+        
         return std::make_unique<UJInstruction>(imm, rd, opcode, instrName);
     }
 
@@ -192,70 +282,140 @@ std::unique_ptr<Instruction> Cpu::decodeInstruction(uint32_t instr)
 void Cpu::execute()
 {
     // std::cout << "[Execute] Executing instruction: 0x" << std::hex << IR << std::endl;
-    currentInstruction->execute(*this);
+    if (pipeline) {
+        if (data_forward) {
+            return;
+        } else {
+            // Stalling
+            decodedInstruction->execute(*this);
+        }
+    } else {
+        currentInstruction->execute(*this);
+    }
+    
 }
 
 void Cpu::memory_update()
 {
-    if (!currentInstruction)
-    {
-        std::cerr << "[Memory] Error: No instruction to execute\n";
-        return;
+    if (pipeline) {
+        if (data_forward) {
+            return;
+        } else {
+            // Stalling
+            executedInstruction->memory_update(*this);
+        }
+    } else {
+        if (!currentInstruction)
+        {
+            std::cerr << "[Memory] Error: No instruction to execute\n";
+            return;
+        }
+        currentInstruction->memory_update(*this);
     }
-
-    // std::cout << "[Memory] Processing memory stage for instruction: 0x" << std::hex << IR << std::endl;
-
-    // Let the instruction handle its own memory operations
-    currentInstruction->memory_update(*this);
+    
 }
 
 void Cpu::write_back()
 {
-    if (!currentInstruction)
-    {
-        std::cerr << "[Write Back] Error: No instruction to execute\n";
-        return;
+    if (pipeline) {
+        if (data_forward) {
+            return;
+        } else {
+            // Stalling
+            memoryAccessedInstruction->writeback(*this);
+        }
+    } else {
+        if (!currentInstruction)
+        {
+            std::cerr << "[Write Back] Error: No instruction to execute\n";
+            return;
+        }
+        // std::cout << "[Write Back] Writing results to registers." << std::endl;
+        currentInstruction->writeback(*this);
     }
-    // std::cout << "[Write Back] Writing results to registers." << std::endl;
-    currentInstruction->writeback(*this);
+
 }
 
 void Cpu::step()
 {
-    switch (currentStep)
-    {
-    case FETCH:
-        if (PC == memory.exitAddress) {
-            std::stringstream ss;
-            ss << "Successfully Exited";
-            memory.comment = ss.str();
-            return;
+    if (pipeline) {
+        if (data_forward) {
+            // Data Forward + Stalling
+
+        } else {
+            // Only Stalling
+                if (PC == memory.exitAddress) {
+                    std::stringstream ss;
+                    ss << "Successfully Exited";
+                    memory.comment = ss.str();
+                    return;
+                }
+                if (memoryAccessedInstruction != nullptr) {
+                    write_back();
+                }
+                if (executedInstruction != nullptr) {
+                    memory_update();
+                }
+                if (decodedInstruction != nullptr) {
+                    execute();
+                }
+                if (IR != 0) {
+                    decode();
+                }
+                if (numberOfBubbles == 0) {
+                    fetch();
+                } else {
+                    std::stringstream ss;
+                    ss << "Stalling for instruction at PC : " << PC - 4;
+                    memory.comment = ss.str();
+                }
+
+                clock++;
+                numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
+                writebackedInstruction = std::move(memoryAccessedInstruction);
+                memoryAccessedInstruction = std::move(executedInstruction);
+                executedInstruction = std::move(decodedInstruction);
+                
+
+
         }
-        fetch();
-        clock++;
-        currentStep = DECODE;
-        break;
-    case DECODE:
-        decode();
-        clock++;
-        currentStep = EXECUTE;
-        break;
-    case EXECUTE:
-        execute();
-        clock++;
-        currentStep = MEMORY;
-        break;
-    case MEMORY:
-        memory_update();
-        clock++;
-        currentStep = WRITEBACK;
-        break;
-    case WRITEBACK:
-        write_back();
-        clock++;
-        // std::cout << "[Clock] Cycle: " << clock << "\n";
-        currentStep = FETCH;
-        break;
+    } else {
+        // No pipelining
+        switch (currentStep)
+        {
+        case FETCH:
+            if (PC == memory.exitAddress) {
+                std::stringstream ss;
+                ss << "Successfully Exited";
+                memory.comment = ss.str();
+                return;
+            }
+            fetch();
+            clock++;
+            currentStep = DECODE;
+            break;
+        case DECODE:
+            decode();
+            clock++;
+            currentStep = EXECUTE;
+            break;
+        case EXECUTE:
+            execute();
+            clock++;
+            currentStep = MEMORY;
+            break;
+        case MEMORY:
+            memory_update();
+            clock++;
+            currentStep = WRITEBACK;
+            break;
+        case WRITEBACK:
+            write_back();
+            clock++;
+            // std::cout << "[Clock] Cycle: " << clock << "\n";
+            currentStep = FETCH;
+            break;
+        }
     }
 }
 

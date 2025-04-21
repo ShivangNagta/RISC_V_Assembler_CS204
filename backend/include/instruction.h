@@ -32,6 +32,15 @@ public:
         
         return 0; 
     }
+    virtual uint32_t getRD() const {
+        return 32;
+    };
+    virtual uint32_t getRS1() const {
+        return 32;
+    };
+    virtual uint32_t getRS2() const {
+        return 32;
+    };
     virtual void writeback(Cpu& cpu) const = 0;
 
 };

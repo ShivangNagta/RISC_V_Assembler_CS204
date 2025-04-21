@@ -30,6 +30,10 @@ uint32_t UJInstruction::getOpcode() const {
     return op;
 }
 
+uint32_t UJInstruction::getRD() const {
+    return rd;
+};
+
 void UJInstruction::execute(Cpu& cpu) const {
     // jal (jump and link)
     // Save return address
@@ -63,3 +67,4 @@ void UJInstruction::writeback(Cpu& cpu) const {
     cpu.registers[0] = 0;
 
 }
+

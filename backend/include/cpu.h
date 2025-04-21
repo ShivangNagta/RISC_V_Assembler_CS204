@@ -2,10 +2,11 @@
 
 #include <stdint.h>
 #include <vector>
-#include "instruction.h"
 #include <unordered_map>
 #include <memory>
+#include <map>
 #include "memory.h"
+#include "instruction.h"
 
 class Instruction;
 
@@ -19,7 +20,22 @@ public:
     uint32_t RM;          
     int32_t RY;       
     int32_t RZ;   
-    uint64_t clock;        
+    uint64_t clock;
+
+    bool pipeline;
+    bool data_forward;
+
+    std::unique_ptr<Instruction> decodedInstruction;
+    std::unique_ptr<Instruction> executedInstruction;
+    std::unique_ptr<Instruction> memoryAccessedInstruction;
+    std::unique_ptr<Instruction> writebackedInstruction;
+
+    // enum class Buffers : uint8_t { RA, RB, RZ, RY, RM };
+
+    std::vector<uint32_t> rdVec;
+    // std::map<std::pair<std::unique_ptr<Instruction>, Buffers>, std::pair<std::unique_ptr<Instruction>, Buffers>> dataForwardMap;
+
+    int numberOfBubbles;
 
     static Step currentStep;
 
@@ -42,7 +58,7 @@ public:
     void run();
 
     void dumpRegisters();
-    std::unique_ptr<Instruction> decodeInstruction(uint32_t instr);
+    std::unique_ptr<Instruction> decodeInstructionFun(uint32_t instr);
     int32_t signExtend(uint32_t value, uint32_t bits);
 
     void reset();

@@ -18,6 +18,7 @@ public:
     std::unordered_map<uint32_t, uint8_t> dataMemory;
     std::unordered_map<uint32_t, uint8_t> stackMemory;
     std::string comment;
+    std::vector<std::string> pipelineComments;
     uint32_t exitAddress;
 
     void storeInstruction(uint32_t address, uint32_t machineCode);

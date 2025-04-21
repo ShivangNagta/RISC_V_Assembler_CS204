@@ -32,6 +32,19 @@ uint32_t RInstruction::getFunct3() const {
     return funct3;
 }
 
+uint32_t RInstruction::getRD() const {
+    return rd;
+};
+
+uint32_t RInstruction::getRS1() const {
+    return rs1;
+};
+
+uint32_t RInstruction::getRS2() const {
+    return rs2;
+};
+
+
 void RInstruction::execute(Cpu& cpu) const {
     int32_t& result = cpu.RY;  // Reference to CPU result register
     
