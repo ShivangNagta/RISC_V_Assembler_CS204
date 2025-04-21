@@ -47,46 +47,27 @@ void IInstruction::execute(Cpu& cpu) const {
         if (funct3 == 0b000) {
             // addi
             result = rs1_val + imm;
-            // std::cout << "[Execute] ADDI: x" << rd << " = x" << rs1 << " + " << imm 
-            //           << " (" << rs1_val << " + " << imm << " = " << result << ")" << std::endl;
         }
         else if (funct3 == 0b110) {
             // ori
             result = rs1_val | imm;
-            // std::cout << "[Execute] ORI: x" << rd << " = x" << rs1 << " | " << imm 
-            //           << " (" << rs1_val << " | " << imm << " = " << result << ")" << std::endl;
         }
         else if (funct3 == 0b111) {
             // andi
             result = rs1_val & imm;
-            // std::cout << "[Execute] ANDI: x" << rd << " = x" << rs1 << " & " << imm 
-            //           << " (" << rs1_val << " & " << imm << " = " << result << ")" << std::endl;
         }
 
-        cpu.memory.comment = "[Execute] I-format instruction " + instrName + " executed and result" + ": " + std::to_string(result);
+        std::string comment = "[Execute] I-format instruction " + instrName + " executed and result: " + std::to_string(result);
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
     }
     else if (op == 0b0000011) {  // I-format load
         // Calculate effective address
         uint32_t addr = rs1_val + imm;
         cpu.RY = addr;  // Store address in memory register
-        
-        if (funct3 == 0b000) {
-            // lb (load byte)
-            // std::cout << "[Execute] LB: Effective address = " << addr << std::endl;
-        }
-        else if (funct3 == 0b001) {
-            // lh (load halfword)
-            // std::cout << "[Execute] LH: Effective address = " << addr << std::endl;
-        }
-        else if (funct3 == 0b010) {
-            // lw (load word)
-            // std::cout << "[Execute] LW: Effective address = " << addr << std::endl;
-        }
-        else if (funct3 == 0b011) {
-            // ld (load doubleword)
-            // std::cout << "[Execute] LD: Effective address = " << addr << std::endl;
-        }
-       
         cpu.memory.comment = "[Execute] I-format instruction " + instrName + " executed and effective address calculated: " + std::to_string(addr);
     }
     else if (op == 0b1100111 && funct3 == 0b000) {  // JALR
@@ -97,8 +78,12 @@ void IInstruction::execute(Cpu& cpu) const {
         uint32_t target = (rs1_val + imm) & ~1;  // Clear least significant bit
         cpu.RM = target;  // Store target address
         
-        cpu.memory.comment = "[Execute] JALR instruction executed. Return address: " + std::to_string(result) + ", Target address: " + std::to_string(target);
-        // std::cout << "[Execute] JALR: Return address = " << result << ", Target = " << target << std::endl;
+        std::string comment = "[Execute] JALR instruction executed. Return address: " + std::to_string(result) + ", Target address: " + std::to_string(target);
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
     }
 }
 
@@ -107,7 +92,12 @@ void IInstruction::memory_update(Cpu& cpu) const {
     // Only handle memory operations for load instructions
     if (op != 0b0000011) {
         // For non-load I-format instructions (addi, jalr, etc.), use default behavior
-        cpu.memory.comment = "[Memory] I-format instruction " + instrName + " does not require memory update.";
+        std::string comment = "[Memory] I-format instruction " + instrName + " does not require memory update.";
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
         return;
     }
     
@@ -117,7 +107,12 @@ void IInstruction::memory_update(Cpu& cpu) const {
     if (cpu.memory.dataMemory.find(addr) == cpu.memory.dataMemory.end()) {
         // std::cout << "[Memory] Warning: Address 0x" << std::hex << addr << " not found in memory\n";
         cpu.RY = 0;  // Default to 0 for non-existent memory
-        cpu.memory.comment = "Invalid address "+std::to_string(addr);
+        std::string comment = "Invalid address "+std::to_string(addr);
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
         return;
     }
     
@@ -126,43 +121,22 @@ void IInstruction::memory_update(Cpu& cpu) const {
         // Sign-extend byte
         int8_t byte = cpu.memory.dataMemory[addr] & 0xFF;
         cpu.RY = static_cast<int32_t>(byte);
-        // std::cout << "[Memory] LB: Loaded byte " << static_cast<int>(byte) 
-        //           << " from address 0x" << std::hex << addr << std::endl;
     }
     else if (funct3 == 0b001) {  // lh (load halfword)
-        // Check alignment and sign-extend halfword
-        // if (addr % 2 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned halfword access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         int16_t halfword = (cpu.memory.dataMemory[addr] & 0xFF) | 
                           ((cpu.memory.dataMemory[addr + 1] & 0xFF) << 8);
         cpu.RY = static_cast<int32_t>(halfword);
-        // std::cout << "[Memory] LH: Loaded halfword " << halfword 
-        //           << " from address 0x" << std::hex << addr << std::endl;
     }
     else if (funct3 == 0b010) {  // lw (load word)
-        // Check alignment
-        // if (addr % 4 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned word access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         int32_t word = (cpu.memory.dataMemory[addr] & 0xFF) | 
                        ((cpu.memory.dataMemory[addr + 1] & 0xFF) << 8) |
                        ((cpu.memory.dataMemory[addr + 2] & 0xFF) << 16) |
                        ((cpu.memory.dataMemory[addr + 3] & 0xFF) << 24);
         cpu.RY = word;
-        // std::cout << "[Memory] LW: Loaded word " << word 
-        //           << " from address 0x" << std::hex << addr << std::endl;
     }
     else if (funct3 == 0b011) {  // ld (load doubleword)
-        // Check alignment
-        // if (addr % 8 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned doubleword access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         // For simplicity, we'll just load the lower 32 bits
         int32_t word = (cpu.memory.dataMemory[addr] & 0xFF) | 
@@ -170,30 +144,34 @@ void IInstruction::memory_update(Cpu& cpu) const {
                        ((cpu.memory.dataMemory[addr + 2] & 0xFF) << 16) |
                        ((cpu.memory.dataMemory[addr + 3] & 0xFF) << 24);
         cpu.RY = word;
-        // std::cout << "[Memory] LD: Loaded lower 32 bits " << word 
-        //           << " from address 0x" << std::hex << addr << std::endl;
     }
 
-    cpu.memory.comment = "[Memory] I-format instruction " + instrName + " Loaded value: " + std::to_string(cpu.RY) + " from address: " + std::to_string(addr);
+    std::string comment = "[Memory] I-format instruction " + instrName + " Loaded value: " + std::to_string(cpu.RY) + " from address: " + std::to_string(addr);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void IInstruction::writeback(Cpu& cpu) const {
-    // if (rd == 0) {
-    //     cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
-    //     return;
-    // }
+    std::string comment = "I-writeback, shouldn't print";
     if (op == 0b0000011) {  // Load instructions
         cpu.registers[rd] = cpu.RY;
-        // std::cout << "[Writeback] Load: Writing " << cpu.RY << " to x" << rd << std::endl;
-        cpu.memory.comment = "[Writeback] Load: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+        comment = "[Writeback] Load: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
     } else if (op == 0b1100111) {  // JALR
         int32_t temp = cpu.PC + 4;
         cpu.PC = cpu.RM;  // Jump to target address
         cpu.registers[rd] = temp;  // Store return address
-        cpu.memory.comment = "[Writeback] JALR: Writing return address " + std::to_string(temp) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
+        comment = "[Writeback] JALR: Writing return address " + std::to_string(temp) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
     } else {  // Other I-format instructions (addi, andi, ori, etc.)
         cpu.registers[rd] = cpu.RY;
-        cpu.memory.comment = "[Writeback] I-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+        comment = "[Writeback] I-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+    }
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
     }
     cpu.registers[0] = 0;
 }

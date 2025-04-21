@@ -42,29 +42,37 @@ void UJInstruction::execute(Cpu& cpu) const {
     // Calculate target address
     cpu.RM = cpu.PC + imm - 4;  // -4 because of +4 in fetch stage
 
-    cpu.memory.comment = "[Execute] UJ-format instruction " + instrName + " executed. Return address: " + std::to_string(cpu.RY) + ", Target address: " + std::to_string(cpu.RM);
-    
-    // std::cout << "[Execute] JAL: Return address = " << cpu.RY 
-    //           << ", Target address = " << cpu.RM << std::endl;
+    std::string comment = "[Execute] UJ-format instruction " + instrName + " executed. Return address: " + std::to_string(cpu.RY) + ", Target address: " + std::to_string(cpu.RM);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }    
 }
 
 void UJInstruction::memory_update(Cpu& cpu) const {
     // No memory update for UJ-type instructions
-    cpu.memory.comment = "[Memory] No memory update for UJ-type instruction " + instrName;
+    std::string comment = "[Memory] No memory update for UJ-type instruction " + instrName;
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
+    cpu.RY = cpu.RM;  // Store target address in Y register
 }
 
 void UJInstruction::writeback(Cpu& cpu) const {
-    // if (rd == 0) {
-    //     // If rd is 0, do not write back the return address
-    //     cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
-    //     return;
-    // }
     cpu.registers[rd] = cpu.PC;  // Store return address
     cpu.PC = cpu.RM;  // Jump to target address
-    // std::cout << "[Writeback] JAL: Writing return address " << cpu.registers[rd] 
-    //           << " to x" << rd << ", jumping to " << cpu.PC << std::endl;
-    cpu.memory.comment = "[Writeback] JAL: Writing return address " + std::to_string(cpu.registers[rd]) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
+    std::string comment = "[Writeback] JAL: Writing return address " + std::to_string(cpu.registers[rd]) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
+    if (rd == 0) {
+        comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+    }
     cpu.registers[0] = 0;
-
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 

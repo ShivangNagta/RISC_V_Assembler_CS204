@@ -89,7 +89,24 @@ void Memory::dumpStack() {
 }
 
 void Memory::dumpComments() {
-    std::cout << comment;
+    if (comment.empty()){
+        if (pipelineComments.empty()){
+            std::cout << "No comments available";
+            return;
+        }
+        std::cout << "Pipeline comments: ";
+        for (int i = 0; i < pipelineComments.size(); i++){
+            std::cout << pipelineComments[i];
+            if (i != pipelineComments.size() - 1) {
+                std::cout << ", ";
+            }
+        }
+        pipelineComments.clear();
+    }
+    else {
+        std::cout << comment;
+        comment.clear();
+    }
 }
 
 void Memory::reset() {

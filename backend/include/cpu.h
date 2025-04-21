@@ -29,7 +29,8 @@ public:
     std::unique_ptr<Instruction> executedInstruction;
     std::unique_ptr<Instruction> memoryAccessedInstruction;
     std::unique_ptr<Instruction> writebackedInstruction;
-
+    std::unique_ptr<Instruction> stalledInstruction;
+    std::map<std::string, uint32_t> instructionMap;
     // enum class Buffers : uint8_t { RA, RB, RZ, RY, RM };
 
     std::vector<uint32_t> rdVec;
@@ -58,8 +59,12 @@ public:
     void run();
 
     void dumpRegisters();
+    std::string dumpPipelineStages();
+
     std::unique_ptr<Instruction> decodeInstructionFun(uint32_t instr);
     int32_t signExtend(uint32_t value, uint32_t bits);
 
     void reset();
+
+    
 };

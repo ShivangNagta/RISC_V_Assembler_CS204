@@ -58,6 +58,8 @@ void runAndOutput()
     std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
     std::cout << ", \"data_forward\":";
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"pipeline_status\": \"";
+    cpu.dumpPipelineStages();
     std::cout << " }" << std::endl;
 }
 
@@ -80,6 +82,8 @@ void stepAndOutput()
     std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
     std::cout << ", \"data_forward\":";
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"pipeline_status\": ";
+    std::cout << cpu.dumpPipelineStages();
     std::cout << " }" << std::endl;
 }
 

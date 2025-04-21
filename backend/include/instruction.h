@@ -42,5 +42,6 @@ public:
         return 32;
     };
     virtual void writeback(Cpu& cpu) const = 0;
+    uint32_t instructionPC = -1;
 
 };

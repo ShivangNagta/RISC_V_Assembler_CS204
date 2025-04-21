@@ -37,82 +37,47 @@ void SInstruction::execute(Cpu& cpu) const {
     // Calculate effective address
     uint32_t addr = cpu.registers[rs1] + imm;
     cpu.RY = addr;  // Store address in memory register
+    std::string comment = "save execute, should not print";
     
     // Get value to store
     int32_t value = cpu.registers[rs2];
     cpu.RM = value;  // Store value in Y register
-    
-    if (funct3 == 0b000) {
-        // sb (store byte)
-        // std::cout << "[Execute] SB: Storing byte from x" << rs2 << " (" << value 
-        //           << ") to address " << addr << std::endl;
-    }
-    else if (funct3 == 0b001) {
-        // sh (store halfword)
-        // std::cout << "[Execute] SH: Storing halfword from x" << rs2 << " (" << value 
-        //           << ") to address " << addr << std::endl;
-    }
-    else if (funct3 == 0b010) {
-        // sw (store word)
-        // std::cout << "[Execute] SW: Storing word from x" << rs2 << " (" << value 
-        //           << ") to address " << addr << std::endl;
-    }
-    else if (funct3 == 0b011) {
-        // sd (store doubleword)
-        // std::cout << "[Execute] SD: Storing doubleword from x" << rs2 << " (" << value 
-        //           << ") to address " << addr << std::endl;
-    }
 
-    cpu.memory.comment = "[Execute] S-format instruction " + instrName + " executed. Effective address: " + std::to_string(addr) + ", Value to store: " + std::to_string(value);
+    comment = "[Execute] S-format instruction " + instrName + " executed. Effective address: " + std::to_string(addr) + ", Value to store: " + std::to_string(value);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void SInstruction::memory_update(Cpu& cpu) const {
     // Memory memory;
     uint32_t addr = cpu.RY;  // Address calculated in execute stage
     int32_t value = cpu.RM;  // Value to store (from rs2)
+    std::string comment = "save memory, should not print";
     
     // Perform the store based on funct3
     if (funct3 == 0b000) {  // sb (store byte)
         cpu.memory.dataMemory[addr] = value & 0xFF;
-        // std::cout << "[Memory] SB: Stored byte " << (value & 0xFF) 
-        //           << " to address 0x" << std::hex << addr << std::endl;
-        cpu.memory.comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr); 
+        comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr); 
     }
     else if (funct3 == 0b001) {  // sh (store halfword)
-        // Check alignment
-        // if (addr % 2 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned halfword access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         cpu.memory.dataMemory[addr] = value & 0xFF;
         cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        cpu.memory.comment = "[Memory] SB: Stored halfword " + std::to_string(value) + " to address " + std::to_string(addr);
-        // std::cout << "[Memory] SH: Stored halfword " << (value & 0xFFFF) 
-        //           << " to address 0x" << std::hex << addr << std::endl;
+        comment = "[Memory] SB: Stored halfword " + std::to_string(value) + " to address " + std::to_string(addr);
     }
     else if (funct3 == 0b010) {  // sw (store word)
-        // Check alignment
-        // if (addr % 4 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned word access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         cpu.memory.dataMemory[addr] = value & 0xFF;
         cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
         cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
         cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
 
-        cpu.memory.comment = "[Memory] SB: Stored word " + std::to_string(value) + " to address " + std::to_string(addr);
-        // std::cout << "[Memory] SW: Stored word " << value 
-        //           << " to address 0x" << std::hex << addr << std::endl;
+        comment = "[Memory] SB: Stored word " + std::to_string(value) + " to address " + std::to_string(addr);
     }
     else if (funct3 == 0b011) {  // sd (store doubleword)
-        // Check alignment
-        // if (addr % 8 != 0) {
-        //     std::cerr << "[Memory] Error: Unaligned doubleword access at 0x" << std::hex << addr << std::endl;
-        //     return;
-        // }
         
         // For simplicity, we'll just store the lower 32 bits
         cpu.memory.dataMemory[addr] = value & 0xFF;
@@ -125,14 +90,24 @@ void SInstruction::memory_update(Cpu& cpu) const {
         cpu.memory.dataMemory[addr + 6] = 0;
         cpu.memory.dataMemory[addr + 7] = 0;
 
-        cpu.memory.comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr);
-        // std::cout << "[Memory] SD: Stored lower 32 bits " << value 
-        //           << " to address 0x" << std::hex << addr << std::endl;
+        comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr);
+    }
+    else {
+        comment = "[Memory] Unknown store instruction: funct3=" + std::to_string(funct3);
+    }
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
     }
 }
 
 void SInstruction::writeback(Cpu& cpu) const {
     // Store instructions don't write back to a register
-    cpu.memory.comment = "[Writeback] Store instruction. No register writeback.";
+    std::string comment = "[Writeback] Store instruction. No register writeback.";
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
-

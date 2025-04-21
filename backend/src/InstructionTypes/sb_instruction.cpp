@@ -38,54 +38,63 @@ uint32_t SBInstruction::getFunct3() const {
 void SBInstruction::execute(Cpu& cpu) const {
     int32_t rs1_val = cpu.registers[rs1];
     int32_t rs2_val = cpu.registers[rs2];
+    std::string comment = "branch execute, should not print";
     bool condition = false;
     
     if (funct3 == 0b000) {
         // beq (branch if equal)
         condition = (rs1_val == rs2_val);
-        // std::cout << "[Execute] BEQ: x" << rs1 << " == x" << rs2 << "? " 
-        //           << (condition ? "true" : "false") << std::endl;
     }
     else if (funct3 == 0b001) {
         // bne (branch if not equal)
         condition = (rs1_val != rs2_val);
-        // std::cout << "[Execute] BNE: x" << rs1 << " != x" << rs2 << "? " 
-        //           << (condition ? "true" : "false") << std::endl;
     }
     else if (funct3 == 0b100) {
         // blt (branch if less than)
         condition = (rs1_val < rs2_val);
-        // std::cout << "[Execute] BLT: x" << rs1 << " < x" << rs2 << "? " 
-        //           << (condition ? "true" : "false") << std::endl;
     }
     else if (funct3 == 0b101) {
         // bge (branch if greater than or equal)
         condition = (rs1_val >= rs2_val);
-        // std::cout << "[Execute] BGE: x" << rs1 << " >= x" << rs2 << "? " 
-        //           << (condition ? "true" : "false") << std::endl;
     }
     
     // Calculate target address if condition is true
     if (condition) {
-        cpu.RM = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
-        cpu.memory.comment = "[Execute] Branch taken. Target address = " + std::to_string(cpu.RM);
-        // std::cout << "[Execute] Branch taken. Target address = " << cpu.RM << std::endl;
+        cpu.RZ = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
+        comment = "[Execute] Branch taken. Target address = " + std::to_string(cpu.RM);
     } 
     else {
-        cpu.RM = cpu.PC;
-        cpu.memory.comment = "[Execute] Branch not taken.";
-        // std::cout << "[Execute] Branch not taken." << std::endl;
+        cpu.RZ = cpu.PC;
+        comment = "[Execute] Branch not taken.";
+    }
+
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
     }
 }
 
 void SBInstruction::memory_update(Cpu& cpu) const {
     // No memory update needed for branch instructions
-    cpu.memory.comment = "[Memory] No memory update for branch instruction " + instrName;
+    std::string comment = "[Memory] No memory update for branch instruction " + instrName;
+    cpu.RY = cpu.RZ;  // Store target address in Y register
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void SBInstruction::writeback(Cpu& cpu) const {
     // Branch instructions update PC based on the condition evaluated in execute
-    cpu.PC = cpu.RM;  // RM contains either PC+4 or branch target from execute stage
-    cpu.memory.comment = "[Writeback] Branch instruction executed. PC updated to " + std::to_string(cpu.PC);
+    cpu.PC = cpu.RY;  // RM contains either PC+4 or branch target from execute stage
+
+    std::string comment = "[Writeback] Branch instruction executed. PC updated to " + std::to_string(cpu.PC);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 

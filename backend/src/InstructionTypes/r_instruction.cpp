@@ -47,6 +47,7 @@ uint32_t RInstruction::getRS2() const {
 
 void RInstruction::execute(Cpu& cpu) const {
     int32_t& result = cpu.RY;  // Reference to CPU result register
+    std::string comment = "R-execute, should not print";
     
     // Get register values
     int32_t rs1_val = cpu.registers[rs1];
@@ -57,52 +58,36 @@ void RInstruction::execute(Cpu& cpu) const {
         if (funct7 == 0b0000000) {
             // add
             result = rs1_val + rs2_val;
-            // std::cout << "[Execute] ADD: x" << rd << " = x" << rs1 << " + x" << rs2 
-            //           << " (" << rs1_val << " + " << rs2_val << " = " << result << ")" << std::endl;
         } 
         else if (funct7 == 0b0100000) {
             // sub
             result = rs1_val - rs2_val;
-            // std::cout << "[Execute] SUB: x" << rd << " = x" << rs1 << " - x" << rs2 
-            //           << " (" << rs1_val << " - " << rs2_val << " = " << result << ")" << std::endl;
         }
         else if (funct7 == 0b0000001) {
             // mul
             result = rs1_val * rs2_val;
-            // std::cout << "[Execute] MUL: x" << rd << " = x" << rs1 << " * x" << rs2 
-            //           << " (" << rs1_val << " * " << rs2_val << " = " << result << ")" << std::endl;
         }
     }
     else if (funct3 == 0b001 && funct7 == 0b0000000) {
         // sll (shift left logical)
         result = rs1_val << (rs2_val & 0x1F);
-        // std::cout << "[Execute] SLL: x" << rd << " = x" << rs1 << " << x" << rs2 
-        //           << " (" << rs1_val << " << " << (rs2_val & 0x1F) << " = " << result << ")" << std::endl;
     }
     else if (funct3 == 0b010 && funct7 == 0b0000000) {
         // slt (set less than)
         result = (rs1_val < rs2_val) ? 1 : 0;
-        // std::cout << "[Execute] SLT: x" << rd << " = (x" << rs1 << " < x" << rs2 << ") ? 1 : 0"
-        //           << " (" << (result ? "true" : "false") << ")" << std::endl;
     }
     else if (funct3 == 0b100) {
         if (funct7 == 0b0000000) {
             // xor
             result = rs1_val ^ rs2_val;
-            // std::cout << "[Execute] XOR: x" << rd << " = x" << rs1 << " ^ x" << rs2 
-            //           << " (" << rs1_val << " ^ " << rs2_val << " = " << result << ")" << std::endl;
         }
         else if (funct7 == 0b0000001) {
             // div
             if (rs2_val == 0) {
                 result = -1;  // Division by zero
-                cpu.memory.comment = "[Execute] DIV: Division by zero error";
-                return;
-                // std::cout << "[Execute] DIV: Division by zero error" << std::endl;
+                comment = "[Execute] DIV: Division by zero error";
             } else {
                 result = rs1_val / rs2_val;
-                // std::cout << "[Execute] DIV: x" << rd << " = x" << rs1 << " / x" << rs2 
-                //           << " (" << rs1_val << " / " << rs2_val << " = " << result << ")" << std::endl;
             }
         }
     }
@@ -110,29 +95,22 @@ void RInstruction::execute(Cpu& cpu) const {
         if (funct7 == 0b0000000) {
             // srl (shift right logical)
             result = static_cast<uint32_t>(rs1_val) >> (rs2_val & 0x1F);
-            // std::cout << "[Execute] SRL: x" << rd << " = x" << rs1 << " >> x" << rs2 
-            //           << " (" << rs1_val << " >> " << (rs2_val & 0x1F) << " = " << result << ")" << std::endl;
         }
         else if (funct7 == 0b0100000) {
             // sra (shift right arithmetic)
             result = rs1_val >> (rs2_val & 0x1F);
-            // std::cout << "[Execute] SRA: x" << rd << " = x" << rs1 << " >> x" << rs2 
-            //           << " (" << rs1_val << " >> " << (rs2_val & 0x1F) << " = " << result << ")" << std::endl;
         }
     }
     else if (funct3 == 0b110) {
         if (funct7 == 0b0000000) {
             // or
             result = rs1_val | rs2_val;
-            // std::cout << "[Execute] OR: x" << rd << " = x" << rs1 << " | x" << rs2 
-            //           << " (" << rs1_val << " | " << rs2_val << " = " << result << ")" << std::endl;
         }
         else if (funct7 == 0b0000001) {
             // rem
             if (rs2_val == 0) {
                 result = rs1_val;  // Remainder with division by zero
-                cpu.memory.comment = "[Execute] REM: Division by zero error";
-                // std::cout << "[Execute] REM: Division by zero error" << std::endl;
+                comment = "[Execute] REM: Division by zero error";
             } else {
                 result = rs1_val % rs2_val;
                 // std::cout << "[Execute] REM: x" << rd << " = x" << rs1 << " % x" << rs2 
@@ -144,29 +122,48 @@ void RInstruction::execute(Cpu& cpu) const {
     else if (funct3 == 0b111 && funct7 == 0b0000000) {
         // and
         result = rs1_val & rs2_val;
-        // std::cout << "[Execute] AND: x" << rd << " = x" << rs1 << " & x" << rs2 
-        //           << " (" << rs1_val << " & " << rs2_val << " = " << result << ")" << std::endl;
     }
 
     else {
-        cpu.memory.comment = "[Execute] Unknown R-type instruction: funct3=" + std::to_string(funct3) + ", funct7=" + std::to_string(funct7);
-        // std::cout << "[Execute] Unknown R-type instruction: funct3=" << funct3 << ", funct7=" << funct7 << std::endl;
+        comment = "[Execute] Unknown R-type instruction: funct3=" + std::to_string(funct3) + ", funct7=" + std::to_string(funct7);
     }
 
-    cpu.memory.comment = "[Execute] R-type instruction " + instrName + " executed and result: " + std::to_string(result);
+    comment = "[Execute] R-type instruction " + instrName + " executed and result: " + std::to_string(result);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void RInstruction::memory_update(Cpu& cpu) const {
     // No memory update for R-type instructions
-    cpu.memory.comment = "[Memory] No memory update for R-type instruction " + instrName;
+    std::string comment = "[Memory] No memory update for R-type instruction " + instrName;
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void RInstruction::writeback(Cpu& cpu) const {
+    std::string comment = "R-writeback, should not print";
     if (rd == 0) {
-        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+        comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
         return;
     }
     cpu.registers[rd] = cpu.RY;
-    cpu.memory.comment = "[Writeback] R-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+    cpu.registers[0] = 0;  // x0 is always zero
+    comment = "[Writeback] R-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 

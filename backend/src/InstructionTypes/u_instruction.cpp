@@ -33,29 +33,45 @@ uint32_t UInstruction::getRD() const {
 void UInstruction::execute(Cpu& cpu) const {
     if (op == 0b0110111) {
         // lui (load upper immediate)
-        cpu.RY = imm;
+        cpu.RZ = imm;
         // std::cout << "[Execute] LUI: x" << rd << " = " << imm << std::endl;
     }
     else if (op == 0b0010111) {
         // auipc (add upper immediate to pc), minus 4 because of +4 in fetch stage
-        cpu.RY = cpu.PC + imm - 4;
+        cpu.RZ = cpu.PC + imm - 4;
         // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
     }
 
-    cpu.memory.comment = "[Execute] U-type instruction " + instrName + " executed and result: " + std::to_string(cpu.RY);
+    std::string comment = "[Execute] U-type instruction " + instrName + " executed and result: " + std::to_string(cpu.RY);
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
 
 void UInstruction::memory_update(Cpu& cpu) const {
     // No memory update for U-type instructions
-    cpu.memory.comment = "[Memory] No memory update for U-type instruction " + instrName;
+    std::string comment = "[Memory] No memory update for U-type instruction " + instrName;
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
+    cpu.RY = cpu.RZ;  // Store target address in Y register
 }
 
 void UInstruction::writeback(Cpu& cpu) const {
-    if (rd == 0) {
-        cpu.memory.comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
-        return;
-    }
+    
     cpu.registers[rd] = cpu.RY;
-    cpu.memory.comment = "[Writeback] U-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
-    // cpu.PC += 4;  // Increment PC
+    std::string comment = "[Writeback] U-type: Writing " + std::to_string(cpu.RY) + " to x" + std::to_string(rd);
+    if (rd == 0) {
+        std::string comment = "[Writeback] Cannot overwrite x0, skipping writeback.";
+    }
+    cpu.registers[0] = 0;  // x0 is always zero
+    if (cpu.pipeline) {
+        cpu.memory.pipelineComments.push_back(comment);
+    } else {
+        cpu.memory.comment = comment;
+    }
 }
