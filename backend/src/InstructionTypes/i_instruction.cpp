@@ -35,26 +35,30 @@ uint32_t IInstruction::getRS1() const {
     return rs1;
 };
 
+int32_t IInstruction::getImm() const {
+    return imm;
+}
+
 uint32_t IInstruction::getFunct3() const {
     return funct3;
 }
 
 void IInstruction::execute(Cpu& cpu) const {
-    int32_t& result = cpu.RY;  // Reference to CPU result register
-    int32_t rs1_val = cpu.registers[rs1];
+    int32_t& result = cpu.RZ;  // Reference to CPU result register
+    // int32_t cpu.RA = cpu.registers[rs1];
     
     if (op == 0b0010011) {  // I-format arithmetic
         if (funct3 == 0b000) {
             // addi
-            result = rs1_val + imm;
+            result = cpu.RA + imm;
         }
         else if (funct3 == 0b110) {
             // ori
-            result = rs1_val | imm;
+            result = cpu.RA | imm;
         }
         else if (funct3 == 0b111) {
             // andi
-            result = rs1_val & imm;
+            result = cpu.RA & imm;
         }
 
         std::string comment = "[Execute] I-format instruction " + instrName + " executed and result: " + std::to_string(result);
@@ -66,7 +70,7 @@ void IInstruction::execute(Cpu& cpu) const {
     }
     else if (op == 0b0000011) {  // I-format load
         // Calculate effective address
-        uint32_t addr = rs1_val + imm;
+        uint32_t addr = cpu.RA + imm;
         cpu.RY = addr;  // Store address in memory register
         cpu.memory.comment = "[Execute] I-format instruction " + instrName + " executed and effective address calculated: " + std::to_string(addr);
     }
@@ -75,7 +79,7 @@ void IInstruction::execute(Cpu& cpu) const {
         result = cpu.PC + 4;
     
         // Calculate jump target
-        uint32_t target = (rs1_val + imm) & ~1;  // Clear least significant bit
+        uint32_t target = (cpu.RA + imm) & ~1;  // Clear least significant bit
         cpu.RM = target;  // Store target address
         
         std::string comment = "[Execute] JALR instruction executed. Return address: " + std::to_string(result) + ", Target address: " + std::to_string(target);

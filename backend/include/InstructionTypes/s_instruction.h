@@ -23,4 +23,7 @@ class SInstruction : public Instruction {
 
     uint32_t getOpcode() const override;
     uint32_t getFunct3() const override;
+    uint32_t getRS1() const override;
+    uint32_t getRS2() const override;
+    int32_t getImm() const override;
 };

@@ -34,10 +34,14 @@ uint32_t UJInstruction::getRD() const {
     return rd;
 };
 
+int32_t UJInstruction::getImm() const {
+    return imm;
+}
+
 void UJInstruction::execute(Cpu& cpu) const {
     // jal (jump and link)
     // Save return address
-    cpu.RY = cpu.PC; // return address is current PC because +4 in fetch stage
+    cpu.RZ = cpu.PC; // return address is current PC because +4 in fetch stage
     
     // Calculate target address
     cpu.RM = cpu.PC + imm - 4;  // -4 because of +4 in fetch stage
@@ -58,11 +62,10 @@ void UJInstruction::memory_update(Cpu& cpu) const {
     } else {
         cpu.memory.comment = comment;
     }
-    cpu.RY = cpu.RM;  // Store target address in Y register
 }
 
 void UJInstruction::writeback(Cpu& cpu) const {
-    cpu.registers[rd] = cpu.PC;  // Store return address
+    cpu.registers[rd] = cpu.RZ;  // Store return address
     cpu.PC = cpu.RM;  // Jump to target address
     std::string comment = "[Writeback] JAL: Writing return address " + std::to_string(cpu.registers[rd]) + " to x" + std::to_string(rd) + ", jumping to " + std::to_string(cpu.PC);
     if (rd == 0) {

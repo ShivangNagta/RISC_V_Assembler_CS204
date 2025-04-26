@@ -30,6 +30,10 @@ uint32_t UInstruction::getRD() const {
     return rd;
 };
 
+int32_t UInstruction::getImm() const {
+    return imm;
+}
+
 void UInstruction::execute(Cpu& cpu) const {
     if (op == 0b0110111) {
         // lui (load upper immediate)

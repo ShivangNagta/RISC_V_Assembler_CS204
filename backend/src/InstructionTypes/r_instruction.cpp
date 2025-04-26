@@ -46,82 +46,80 @@ uint32_t RInstruction::getRS2() const {
 
 
 void RInstruction::execute(Cpu& cpu) const {
-    int32_t& result = cpu.RY;  // Reference to CPU result register
+    int32_t& result = cpu.RZ;  // Reference to CPU result register
     std::string comment = "R-execute, should not print";
     
     // Get register values
-    int32_t rs1_val = cpu.registers[rs1];
-    int32_t rs2_val = cpu.registers[rs2];
+    // int32_t cpu.RA = cpu.registers[rs1];
+    // int32_t cpu.RB = cpu.registers[rs2];
     
     // Execute based on funct3 and funct7
     if (funct3 == 0b000) {
         if (funct7 == 0b0000000) {
             // add
-            result = rs1_val + rs2_val;
+            result = cpu.RA + cpu.RB;
         } 
         else if (funct7 == 0b0100000) {
             // sub
-            result = rs1_val - rs2_val;
+            result = cpu.RA - cpu.RB;
         }
         else if (funct7 == 0b0000001) {
             // mul
-            result = rs1_val * rs2_val;
+            result = cpu.RA * cpu.RB;
         }
     }
     else if (funct3 == 0b001 && funct7 == 0b0000000) {
         // sll (shift left logical)
-        result = rs1_val << (rs2_val & 0x1F);
+        result = cpu.RA << (cpu.RB & 0x1F);
     }
     else if (funct3 == 0b010 && funct7 == 0b0000000) {
         // slt (set less than)
-        result = (rs1_val < rs2_val) ? 1 : 0;
+        result = (cpu.RA < cpu.RB) ? 1 : 0;
     }
     else if (funct3 == 0b100) {
         if (funct7 == 0b0000000) {
             // xor
-            result = rs1_val ^ rs2_val;
+            result = cpu.RA ^ cpu.RB;
         }
         else if (funct7 == 0b0000001) {
             // div
-            if (rs2_val == 0) {
+            if (cpu.RB == 0) {
                 result = -1;  // Division by zero
                 comment = "[Execute] DIV: Division by zero error";
             } else {
-                result = rs1_val / rs2_val;
+                result = cpu.RA / cpu.RB;
             }
         }
     }
     else if (funct3 == 0b101) {
         if (funct7 == 0b0000000) {
             // srl (shift right logical)
-            result = static_cast<uint32_t>(rs1_val) >> (rs2_val & 0x1F);
+            result = static_cast<uint32_t>(cpu.RA) >> (cpu.RB & 0x1F);
         }
         else if (funct7 == 0b0100000) {
             // sra (shift right arithmetic)
-            result = rs1_val >> (rs2_val & 0x1F);
+            result = cpu.RA >> (cpu.RB & 0x1F);
         }
     }
     else if (funct3 == 0b110) {
         if (funct7 == 0b0000000) {
             // or
-            result = rs1_val | rs2_val;
+            result = cpu.RA | cpu.RB;
         }
         else if (funct7 == 0b0000001) {
             // rem
-            if (rs2_val == 0) {
-                result = rs1_val;  // Remainder with division by zero
+            if (cpu.RB == 0) {
+                result = cpu.RA;  // Remainder with division by zero
                 comment = "[Execute] REM: Division by zero error";
             } else {
-                result = rs1_val % rs2_val;
-                // std::cout << "[Execute] REM: x" << rd << " = x" << rs1 << " % x" << rs2 
-                //           << " (" << rs1_val << " % " << rs2_val << " = " << result << ")" << std::endl;
+                result = cpu.RA % cpu.RB;
             }
         }
 
     }
     else if (funct3 == 0b111 && funct7 == 0b0000000) {
         // and
-        result = rs1_val & rs2_val;
+        result = cpu.RA & cpu.RB;
     }
 
     else {

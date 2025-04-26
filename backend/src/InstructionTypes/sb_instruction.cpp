@@ -35,27 +35,39 @@ uint32_t SBInstruction::getFunct3() const {
     return funct3;
 }
 
+uint32_t SBInstruction::getRS1() const {
+    return rs1;
+}
+
+uint32_t SBInstruction::getRS2() const {
+    return rs2;
+}
+
+int32_t SBInstruction::getImm() const {
+    return imm;
+}
+
 void SBInstruction::execute(Cpu& cpu) const {
-    int32_t rs1_val = cpu.registers[rs1];
-    int32_t rs2_val = cpu.registers[rs2];
+    // int32_t cpu.RA = cpu.registers[rs1];
+    // int32_t cpu.RB = cpu.registers[rs2];
     std::string comment = "branch execute, should not print";
     bool condition = false;
     
     if (funct3 == 0b000) {
         // beq (branch if equal)
-        condition = (rs1_val == rs2_val);
+        condition = (cpu.RA == cpu.RB);
     }
     else if (funct3 == 0b001) {
         // bne (branch if not equal)
-        condition = (rs1_val != rs2_val);
+        condition = (cpu.RA != cpu.RB);
     }
     else if (funct3 == 0b100) {
         // blt (branch if less than)
-        condition = (rs1_val < rs2_val);
+        condition = (cpu.RA < cpu.RB);
     }
     else if (funct3 == 0b101) {
         // bge (branch if greater than or equal)
-        condition = (rs1_val >= rs2_val);
+        condition = (cpu.RA >= cpu.RB);
     }
     
     // Calculate target address if condition is true

@@ -33,15 +33,27 @@ uint32_t SInstruction::getFunct3() const {
     return funct3;
 }
 
+int32_t SInstruction::getImm() const {
+    return imm;
+}
+
+uint32_t SInstruction::getRS1() const {
+    return rs1;
+}
+
+uint32_t SInstruction::getRS2() const {
+    return rs2;
+}
+
 void SInstruction::execute(Cpu& cpu) const {
     // Calculate effective address
-    uint32_t addr = cpu.registers[rs1] + imm;
-    cpu.RY = addr;  // Store address in memory register
+    uint32_t addr = cpu.RA + imm; // Address calculation (rs1 + imm)
+    cpu.RZ = addr;  // Store address in RZ
     std::string comment = "save execute, should not print";
     
     // Get value to store
-    int32_t value = cpu.registers[rs2];
-    cpu.RM = value;  // Store value in Y register
+    int32_t value = cpu.RB; // Value to store (from rs2)
+    cpu.RM = value;  // Store value in RM
 
     comment = "[Execute] S-format instruction " + instrName + " executed. Effective address: " + std::to_string(addr) + ", Value to store: " + std::to_string(value);
     if (cpu.pipeline) {
@@ -53,7 +65,7 @@ void SInstruction::execute(Cpu& cpu) const {
 
 void SInstruction::memory_update(Cpu& cpu) const {
     // Memory memory;
-    uint32_t addr = cpu.RY;  // Address calculated in execute stage
+    uint32_t addr = cpu.RZ;  // Address calculated in execute stage
     int32_t value = cpu.RM;  // Value to store (from rs2)
     std::string comment = "save memory, should not print";
     

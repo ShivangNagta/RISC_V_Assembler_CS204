@@ -12,9 +12,10 @@
 
 Step Cpu::currentStep = FETCH;
 
-Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), RZ(0), clock(0), memory(memory), data_forward(false), pipeline(false), numberOfBubbles(0),
-                           decodedInstruction(nullptr), executedInstruction(nullptr), memoryAccessedInstruction(nullptr), 
-                           writebackedInstruction(nullptr), stalledInstruction(nullptr)
+Cpu::Cpu(Memory &memory) : PC(0), IR(0), RA(0), RB(0), RM(0), RY(0), RZ(0), clock(0), memory(memory), 
+                            data_forward(false), pipeline(false), numberOfBubbles(0),
+                            decodedInstruction(nullptr), executedInstruction(nullptr), memoryAccessedInstruction(nullptr), 
+                            writebackedInstruction(nullptr), stalledInstruction(nullptr)
 {
     for (int i = 0; i < 32; i++)
     {
@@ -22,7 +23,7 @@ Cpu::Cpu(Memory &memory) : PC(0), IR(0), RM(0), RY(0), RZ(0), clock(0), memory(m
     }
     for (int i = 0; i < 5; i++)
     {
-        rdVec.push_back(33);
+        rdVec.push_back(32);
     }
     registers[2] = 0x7FFFFFDC;
     registers[3] = 0x10000000;
@@ -84,26 +85,140 @@ void Cpu::decode()
         //Dependency Check
         uint32_t rs1 = decodedInstruction->getRS1();
         uint32_t rs2 = decodedInstruction->getRS2();
-        for (int i = 0; i < 5; ++i) {
-            // check rs1
-            if (rs1 != 32 && rs1 == rdVec[i]) {
-                switch (i)
-                {
-                case 2:
-                    numberOfBubbles = 1;
-                    stalledInstruction = std::move(decodedInstruction);
-                    break;
-                case 3:
-                    numberOfBubbles = 2;
-                    stalledInstruction = std::move(decodedInstruction);
-                    break;
-                default:
-                    continue;
+        RA = registers[rs1];
+        if (rs2 != 32) RB = registers[rs2];
+        else RB = decodedInstruction->getImm();
+        // if (!data_forward){
+            for (int i = 0; i < 5; ++i) {
+                // check rs1
+                if (rs1 != 32 && rs1 == rdVec[i]) {
+                    std::cout << "rs1: " << rs1 << " rdVec[i]: " << rdVec[i] << std::endl;
+                    if (data_forward) {
+                        checkDataForwarding(decodedInstruction, i, 0);
+                        continue;
+                    }
+                    switch (i)
+                    {
+                    case 2:
+                        numberOfBubbles = 1;
+                        stalledInstruction = std::move(decodedInstruction);
+                        break;
+                    case 3:
+                        numberOfBubbles = 2;
+                        stalledInstruction = std::move(decodedInstruction);
+                        break;
+                    default:
+                        continue;
+                    }
+                }
+                if (rs2 != 32 && rs2 == rdVec[i]) {
+                    if (data_forward) {
+                        checkDataForwarding(decodedInstruction, i, 1);
+                        continue;
+                    }
+                    switch (i)
+                    {
+                    case 2:
+                        numberOfBubbles = std::max(1, numberOfBubbles);
+                        stalledInstruction = std::move(decodedInstruction);
+                        break;
+                    case 3:
+                        numberOfBubbles = std::max(2, numberOfBubbles);
+                        stalledInstruction = std::move(decodedInstruction);
+                        break;
+                    default:
+                        continue;
+                    }
                 }
             }
-        }
+        // }
+        
         IR = 0;
     }
+}
+
+void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, int indexOfRDVec, int rsNo) {
+
+    switch (indexOfRDVec)
+    {
+    case 2: // from instr is memoryAccessedInstruction, i.e., forward from M
+            // M to E, only for fwd from load obv
+        std::cout << "M to E" << std::endl;
+        if (rsNo == 0) {
+            dataForwardMap[{memoryAccessedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
+        } else {
+            dataForwardMap[{memoryAccessedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
+        }
+        break;
+    case 3: // from instr is executedInstruction, i.e., forward from E
+        
+        // std::cout << "E to E" << std::endl;
+        // M to E, if executedInstruction is load, with 1 bubble
+        if (executedInstruction->getName() == "LD" || executedInstruction->getName() == "LW"
+            || executedInstruction->getName() == "LH" || executedInstruction->getName() == "LB") {
+            numberOfBubbles = 1;
+            stalledInstruction = std::move(decodedInstruction);
+            if (rsNo == 0) {
+                dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
+            } else {
+                dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
+            }
+        } else { // E to E for anything else
+            std::cout << "E to E" << std::endl;
+            if (rsNo == 0) {
+                dataForwardMap[{executedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RZ, Buffers::RA };
+            } else {
+                dataForwardMap[{executedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RZ, Buffers::RB };
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+const char* bufferTypeToString(Cpu::Buffers buffer) {
+    switch (buffer) {
+        case Cpu::Buffers::RM: return "RM";
+        case Cpu::Buffers::RZ: return "RZ";
+        case Cpu::Buffers::RA: return "RA";
+        case Cpu::Buffers::RB: return "RB";
+        case Cpu::Buffers::RY: return "RY";
+        default: return "Unknown";
+    }
+}
+
+void Cpu::doDataForwarding() {
+
+    // std::cout << "[Data Forwarding] Data Forwarding" << std::endl;
+    for (auto& [key, value] : dataForwardMap) {
+        auto [fromPC, toPC] = key;
+        auto [fromBuffer, toBuffer] = value;
+        std::cout << "[Data Forwarding] Data Forwarding from " << std::hex << fromPC << " to " << std::hex << toPC << std::endl;
+        std::cout << "[Data Forwarding] Data Forwarding from " << bufferTypeToString(fromBuffer) << " to " << bufferTypeToString(toBuffer) << std::endl;
+        if (fromBuffer == Buffers::RY) {
+            if (toBuffer == Buffers::RA) {
+                RA = RY;
+            } else if (toBuffer == Buffers::RB) {
+                RB = RY;
+            }
+        } else if (fromBuffer == Buffers::RM) {
+            if (toBuffer == Buffers::RA) {
+                RA = RM;
+            } else if (toBuffer == Buffers::RB) {
+                RB = RM;
+            }
+        } else if (fromBuffer == Buffers::RZ) {
+            if (toBuffer == Buffers::RA) {
+                RA = RZ;
+            } else if (toBuffer == Buffers::RB) {
+                RB = RZ;
+            }
+        }
+    }
+
+    // clear the data forward map after use
+    dataForwardMap.clear();
 }
 
 int32_t Cpu::signExtend(uint32_t value, uint32_t bits)
@@ -295,14 +410,9 @@ void Cpu::execute()
 {
     // std::cout << "[Execute] Executing instruction: 0x" << std::hex << IR << std::endl;
     if (pipeline) {
-        if (data_forward) {
-            return;
-        } else {
-            // Stalling
-            // std::cout << "executing instruction: " << std::hex << IR << std::endl;
-            decodedInstruction->execute(*this);
-            executedInstruction = std::move(decodedInstruction);
-        }
+        decodedInstruction->execute(*this);
+        executedInstruction = std::move(decodedInstruction);
+    
     } else {
         currentInstruction->execute(*this);
     }
@@ -312,13 +422,8 @@ void Cpu::execute()
 void Cpu::memory_update()
 {
     if (pipeline) {
-        if (data_forward) {
-            return;
-        } else {
-            // Stalling
-            executedInstruction->memory_update(*this);
-            memoryAccessedInstruction = std::move(executedInstruction);
-        }
+        executedInstruction->memory_update(*this);
+        memoryAccessedInstruction = std::move(executedInstruction);
     } else {
         if (!currentInstruction)
         {
@@ -333,13 +438,8 @@ void Cpu::memory_update()
 void Cpu::write_back()
 {
     if (pipeline) {
-        if (data_forward) {
-            return;
-        } else {
-            // Stalling
-            memoryAccessedInstruction->writeback(*this);
-            writebackedInstruction = std::move(memoryAccessedInstruction);
-        }
+        memoryAccessedInstruction->writeback(*this);
+        writebackedInstruction = std::move(memoryAccessedInstruction);
     } else {
         if (!currentInstruction)
         {
@@ -355,57 +455,55 @@ void Cpu::write_back()
 void Cpu::step()
 {
     if (pipeline) {
-        if (data_forward) {
-            // Data Forward + Stalling
 
+        if (PC == memory.exitAddress) {
+            std::stringstream ss;
+            ss << "Successfully Exited";
+            memory.comment = ss.str();
+            return;
+        }
+        if (memoryAccessedInstruction != nullptr) {
+            write_back();
+        }
+        if (executedInstruction != nullptr) {
+            memory_update();
+        }
+        if (decodedInstruction != nullptr) {
+            execute();
+        }
+        if (IR != 0) {
+            decode();
+        }
+        if (numberOfBubbles == 0) {
+            fetch();
         } else {
-            // Only Stalling
-                if (PC == memory.exitAddress) {
-                    std::stringstream ss;
-                    ss << "Successfully Exited";
-                    memory.comment = ss.str();
-                    return;
-                }
-                if (memoryAccessedInstruction != nullptr) {
-                    write_back();
-                }
-                if (executedInstruction != nullptr) {
-                    memory_update();
-                }
-                if (decodedInstruction != nullptr) {
-                    execute();
-                }
-                if (IR != 0) {
-                    decode();
-                }
-                if (numberOfBubbles == 0) {
-                    fetch();
-                } else {
-                    std::stringstream ss;
-                    ss << "Stalling for instruction at PC : " << PC - 4;
-                    memory.pipelineComments.push_back(ss.str());
-                }
+            std::stringstream ss;
+            ss << "Stalling for instruction at PC : " << PC - 4;
+            memory.pipelineComments.push_back(ss.str());
+        }
 
-                clock++;
+        clock++;
 
-                if (numberOfBubbles == 0 && stalledInstruction != nullptr) {
-                    decodedInstruction = std::move(stalledInstruction);
-                }
-                numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
-                
-                // std::cout << "[Clock] Cycle: " << clock << "\n";
-                // std::cout << "Bubbles: " << numberOfBubbles << "\n";
-                
-                instructionMap["F"] = PC-4;
-                instructionMap["D"] = stalledInstruction? stalledInstruction->instructionPC : (decodedInstruction? decodedInstruction->instructionPC : 10000);
-                instructionMap["E"] = executedInstruction? executedInstruction->instructionPC : 10000;
-                instructionMap["M"] = memoryAccessedInstruction? memoryAccessedInstruction->instructionPC : 10000;
-                instructionMap["W"] = writebackedInstruction? writebackedInstruction->instructionPC : 10000;
-                // for (auto& [key, value] : instructionMap) {
-                //     // if (value == 10000) {
-                //     std::cout << key << ": " << value << "\n";
-                //     // }
-                // }
+        if (numberOfBubbles == 0 && stalledInstruction != nullptr) {
+            decodedInstruction = std::move(stalledInstruction);
+        }
+        numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
+        
+        // std::cout << "[Clock] Cycle: " << clock << "\n";
+        std::cout << "Bubbles: " << numberOfBubbles << "\n";
+        
+        instructionMap["F"] = PC-4;
+        instructionMap["D"] = stalledInstruction? stalledInstruction->instructionPC : (decodedInstruction? decodedInstruction->instructionPC : 10000);
+        instructionMap["E"] = executedInstruction? executedInstruction->instructionPC : 10000;
+        instructionMap["M"] = memoryAccessedInstruction? memoryAccessedInstruction->instructionPC : 10000;
+        instructionMap["W"] = writebackedInstruction? writebackedInstruction->instructionPC : 10000;
+        // for (auto& [key, value] : instructionMap) {
+        //     // if (value == 10000) {
+        //     std::cout << key << ": " << value << "\n";
+        //     // }
+        // }
+        if (data_forward){
+            doDataForwarding();
         }
     } else {
         // No pipelining

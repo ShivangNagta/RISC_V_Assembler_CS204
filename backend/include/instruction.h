@@ -41,7 +41,14 @@ public:
     virtual uint32_t getRS2() const {
         return 32;
     };
+    virtual int32_t getImm() const {
+        return 0;
+    };
+
     virtual void writeback(Cpu& cpu) const = 0;
     uint32_t instructionPC = -1;
+    std::string getName() const {
+        return instrName;
+    };
 
 };

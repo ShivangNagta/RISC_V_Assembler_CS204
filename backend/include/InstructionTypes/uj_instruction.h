@@ -18,4 +18,5 @@ public:
 
     uint32_t getOpcode() const override;
     uint32_t getRD() const override;
+    int32_t getImm() const override;
 };
