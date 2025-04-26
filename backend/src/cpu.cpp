@@ -141,8 +141,8 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
 
     switch (indexOfRDVec)
     {
-    case 2: // from instr is memoryAccessedInstruction, i.e., forward from M
-            // M to E, only for fwd from load obv
+    case 2: // from instr is memoryAccessedInstruction, i.e., forward from prev to prev ins
+            // M to E
         std::cout << "M to E" << std::endl;
         if (rsNo == 0) {
             dataForwardMap[{memoryAccessedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
@@ -150,7 +150,7 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
             dataForwardMap[{memoryAccessedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
         }
         break;
-    case 3: // from instr is executedInstruction, i.e., forward from E
+    case 3: // from instr is executedInstruction, i.e., forward from prev ins
         
         // std::cout << "E to E" << std::endl;
         // M to E, if executedInstruction is load, with 1 bubble
