@@ -15,7 +15,7 @@ Step Cpu::currentStep = FETCH;
 Cpu::Cpu(Memory &memory) : PC(0), IR(0), RA(0), RB(0), RM(0), RY(0), RZ(0), clock(0), memory(memory), 
                             data_forward(false), pipeline(false), numberOfBubbles(0),
                             decodedInstruction(nullptr), executedInstruction(nullptr), memoryAccessedInstruction(nullptr), 
-                            writebackedInstruction(nullptr), stalledInstruction(nullptr)
+                            writebackedInstruction(nullptr), stalledInstruction(nullptr), dataForwardPair(std::make_pair("", ""))
 {
     for (int i = 0; i < 32; i++)
     {
@@ -74,18 +74,19 @@ void Cpu::fetch()
 
 void Cpu::decode()
 {
-    currentInstruction = decodeInstructionFun(IR);       
+    currentInstruction = decodeInstructionFun(IR);
+    if (!currentInstruction)
+    {
+        std::cerr << "[Decode] Error: Failed to decode instruction 0x" << std::hex << IR << "\n";
+        return;
+    }   
     uint32_t rs1 = currentInstruction->getRS1();
     uint32_t rs2 = currentInstruction->getRS2();
     RA = registers[rs1];
     if (rs2 != 32) RB = registers[rs2];
     else RB = currentInstruction->getImm();
     currentInstruction->instructionPC = PC - 4; // Store the instruction PC for later use
-    if (!currentInstruction)
-    {
-        std::cerr << "[Decode] Error: Failed to decode instruction 0x" << std::hex << IR << "\n";
-        return;
-    }
+
     if (pipeline) {
         decodedInstruction = std::move(currentInstruction);
         if (rdVec.size() == 5) {
@@ -140,10 +141,12 @@ void Cpu::decode()
                 }
             }
         }
-        std::string instrName = decodedInstruction->getName();
-        if (predictionBool && (instrName == "JAL" || instrName == "JALR" || instrName == "BEQ" || 
-            instrName == "BNE" || instrName == "BLT" || instrName == "BGE")) {
-            branchPrediction(instrName, decodedInstruction->getImm());
+        if (data_forward) {
+            std::string instrName = decodedInstruction->getName();
+            if (predictionBool && (instrName == "JAL" || instrName == "JALR" || instrName == "BEQ" || 
+                instrName == "BNE" || instrName == "BLT" || instrName == "BGE")) {
+                branchPrediction(instrName, decodedInstruction->getImm());
+            }
         }
         IR = 0;
     }
@@ -207,6 +210,8 @@ void Cpu::doDataForwarding() {
         auto [fromPC, toPC] = key;
         auto [fromBuffer, toBuffer] = value;
         // std::cout << "[Data Forwarding] Data Forwarding from " << std::hex << fromPC << " to " << std::hex << toPC << std::endl;
+        dataForwardPair.first = bufferTypeToString(fromBuffer);
+        dataForwardPair.second = bufferTypeToString(toBuffer);
         // std::cout << "[Data Forwarding] Data Forwarding from " << bufferTypeToString(fromBuffer) << " to " << bufferTypeToString(toBuffer) << std::endl;
         if (fromBuffer == Buffers::RY) {
             if (toBuffer == Buffers::RA) {
@@ -623,6 +628,15 @@ void Cpu::dumpRegisters()
             first = false;
         }
     }
+}
+
+void Cpu::dumpDataForwardPath() {
+
+        std::cout << "{ \"fromBuffer\": "<< "\"" << dataForwardPair.first << "\"" << ", "
+           << "\"toBuffer\": " << "\"" << dataForwardPair.second << "\"" << "}";
+    
+    dataForwardPair.first = "";
+    dataForwardPair.second = "";
 }
 
 void Cpu::reset()

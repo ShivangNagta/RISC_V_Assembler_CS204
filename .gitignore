@@ -1,6 +1,7 @@
 .vscode
 main
 main.exe
+main.dSYM
 
 # Logs
 logs

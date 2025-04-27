@@ -11,8 +11,15 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [pipelineEnabled, setPipelineEnabled] = useState(false);
+  const [dataForwardPath, setDataForwardPath] = useState({});
+  const [ra, setRA] = useState(0);
+  const [rb, setRB] = useState(0);
+  const [ry, setRY] = useState(0);
+  const [rz, setRZ] = useState(0);
+  const [rm, setRM] = useState(0);
   const [assembled, setAssembled] = useState(false)
   const [dataForwardingEnabled, setDataForwardingEnabled] = useState(false);
+  const [branchPredictionEnabled, setBranchPredictionEnabled] = useState(false);
   const [pipelineInstructions, setPipelineInstructions] = useState({})
   const [editorContent, setEditorContent] = useState(`#Default
 
@@ -90,7 +97,14 @@ done:
     setRegisters({});
     setMachineCode([]);
     setComment("");
+    setPipelineInstructions({});
     setClockCycles(0);
+    setDataForwardPath({});
+    setRA(0);
+    setRB(0);
+    setRY(0);
+    setRZ(0);
+    setRM(0);
   };
 
   const handleStep = async () => {
@@ -103,6 +117,12 @@ done:
       setClockCycles(response.data.clock_cycles);
       setComment(response.data.comment);
       setPipelineInstructions(response.data.pipeline_status)
+      setDataForwardPath(response.data.data_forward_path)
+      setRA(response.data.ra)
+      setRB(response.data.rb)
+      setRY(response.data.ry)
+      setRZ(response.data.rz)
+      setRM(response.data.rm)
     } catch (err) {
       setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
@@ -134,8 +154,16 @@ done:
   const toggleDataForwarding = async () => {
     const id = localStorage.getItem("id") ?? "";
     const newValue = !dataForwardingEnabled;
+    if (newValue === false && branchPredictionEnabled === true) toggleBranchPrediction()
     setDataForwardingEnabled(newValue);
     const response = await axios.post(`http://localhost:3000/dataForward/?dataForwardingEnabled=${newValue}`, { id });
+  };
+
+  const toggleBranchPrediction = async () => {
+    const id = localStorage.getItem("id") ?? "";
+    const newValue = !branchPredictionEnabled;
+    setBranchPredictionEnabled(newValue);
+    const response = await axios.post(`http://localhost:3000/branchPrediction/?branchPredictionEnabled=${newValue}`, { id });
   };
 
   const stageColor = {
@@ -195,6 +223,17 @@ done:
                 Forwarding {dataForwardingEnabled ? "On" : "Off"}
               </button>
 
+              <button
+                onClick={toggleBranchPrediction}
+                disabled={!dataForwardingEnabled}
+                className={`px-3 py-1 rounded text-sm 
+    ${dataForwardingEnabled
+                    ? (branchPredictionEnabled ? "bg-green-700" : "bg-gray-700")
+                    : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                  }`}>
+                Branch Prediction {branchPredictionEnabled ? "On" : "Off"}
+              </button>
+
             </div>
 
             <div className="overflow-auto flex-grow border border-gray-700">
@@ -213,7 +252,7 @@ done:
                   )?.[0]; // returns the stage name like 'F', 'D', etc.
 
                   return (
-                    <tr key={index} className={`${stageColor[currentStage] || "bg-gray-900"} border-b border-gray-800`}>
+                    <tr key={index} className={`${stageColor[currentStage] || "bg-black-900"} border-b border-gray-800`}>
                       <td className="p-2">{inst.pc}</td>
                       <td className="p-2">{inst.machineCode}</td>
                       <td className="p-2 capitalize">{currentStage || '-'}</td>
@@ -241,13 +280,18 @@ done:
             </div>
             <div className="overflow-auto max-h-screen border border-gray-700 p-2 text-sm">
               {rightTab === "registers"
-                ? Object.entries(registers).map(([name, value], i) => (
+                ? ( <> 
+                <h1 className='mt-2 text-2xl' >Registers </h1>
+                {Object.entries(registers).map(([name, value], i) => (
                   <div key={i} className="flex justify-between border-b border-gray-700 py-1">
                     <span>{name}</span>
                     <span>{value}</span>
                   </div>
-                ))
-                : (
+                ))}
+                
+               
+                  </>
+                ) : (
                   <>
                     <h2 className="text-gray-400 mb-1">Stack</h2>
                     {Object.entries(stack).map(([addr, value], i) => (
@@ -266,6 +310,35 @@ done:
                   </>
                 )}
             </div>
+            <div className="mt-8 bg-black p-2 border-t border-l border-r border-gray-700 rounded-b h-60 overflow-auto">
+                <h1 className='mt-2 text-2xl' >Pipeline Registers </h1>
+                  <div className="flex justify-between border-b border-gray-700 py-1">
+                    <span>RA : </span>
+                    <span>{ra}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-700 py-1">
+                    <span>RB : </span>
+                    <span>{rb}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-700 py-1">
+                    <span>RY : </span>
+                    <span>{ry}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-700 py-1">
+                    <span>RZ : </span>
+                    <span>{rz}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-700 py-1">
+                    <span>RM : </span>
+                    <span>{rm}</span>
+                  </div>
+                </div>
+
+            <div className="mt-8 bg-black p-2 border-t border-l border-r border-gray-700 rounded-b h-100 overflow-auto">
+            <h1 className='mt-2 text-2xl' >Data Forwarding </h1>
+                <strong className="text-gray-400">{dataForwardPath.fromBuffer === undefined || dataForwardPath.fromBuffer === '' ? 'No Data Forwarding' :
+                `Data Forwarding from '${dataForwardPath.fromBuffer}' to '${dataForwardPath.toBuffer}'` }</strong>
+          </div>
           </div>
         </div>
       )}

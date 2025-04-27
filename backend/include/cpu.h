@@ -29,6 +29,8 @@ public:
     bool pipeline;
     bool data_forward;
 
+    std::pair<std::string, std::string> dataForwardPair;
+
     std::unique_ptr<Instruction> decodedInstruction;
     std::unique_ptr<Instruction> executedInstruction;
     std::unique_ptr<Instruction> memoryAccessedInstruction;
@@ -66,6 +68,7 @@ public:
 
     void dumpRegisters();
     std::string dumpPipelineStages();
+    void dumpDataForwardPath();
 
     std::unique_ptr<Instruction> decodeInstructionFun(uint32_t instr);
     // instr to check, index of rdVec, rsNo to check(rs1 or rs2, 0 for rs1, 1 for rs2)

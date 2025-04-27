@@ -82,6 +82,18 @@ void stepAndOutput()
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
     std::cout << ", \"pipeline_status\": ";
     std::cout << cpu.dumpPipelineStages();
+    std::cout << ", \"data_forward_path\": ";
+    cpu.dumpDataForwardPath();
+    std::cout << ", \"RA\": ";
+    std::cout << cpu.RA;
+    std::cout << ", \"RB\": ";
+    std::cout << cpu.RB;
+    std::cout << ", \"RY\": ";
+    std::cout << cpu.RY;
+    std::cout << ", \"RZ\": ";
+    std::cout << cpu.RZ;
+    std::cout << ", \"RM\": ";
+    std::cout << cpu.RM;
     std::cout << " }" << std::endl;
 }
 
@@ -104,6 +116,8 @@ void pipeline()
     std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
     std::cout << ", \"data_forward\":";
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"branch_prediction\":";
+    std::cout << (cpu.predictionBool ? "\"On\"" : "\"Off\"");
     std::cout << " }" << std::endl;
 }
 
@@ -125,6 +139,30 @@ void dataForward()
     std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
     std::cout << ", \"data_forward\":";
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"branch_prediction\":";
+    std::cout << (cpu.predictionBool ? "\"On\"" : "\"Off\"");
+    std::cout << " }" << std::endl;
+}
+
+void branchPrediction() {
+    cpu.predictionBool = !cpu.predictionBool;
+    std::cout << "{ \"data_segment\": {";
+    memory.dumpMemory();
+    std::cout << "}, \"instruction_memory\": {";
+    memory.dumpInstructions();
+    std::cout << "}, \"stack\": {";
+    memory.dumpStack();
+    std::cout << "}, \"registers\": {";
+    cpu.dumpRegisters();
+    std::cout << "}, \"clock_cycles\": " << std::dec << cpu.clock << " ";
+    std::cout << ", \"comment\": \"";
+    memory.dumpComments();
+    std::cout << "\", \"pipeline\":";
+    std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"data_forward\":";
+    std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"branch_prediction\":";
+    std::cout << (cpu.predictionBool ? "\"On\"" : "\"Off\"");
     std::cout << " }" << std::endl;
 }
 
@@ -157,6 +195,10 @@ int main(int argc, char *argv[])
             else if (command == "data_forward")
             {
                 dataForward();
+            }
+            else if (command == "branch_prediction")
+            {
+                branchPrediction();
             }
             else
             {
