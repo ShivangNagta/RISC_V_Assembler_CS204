@@ -49,7 +49,7 @@ const std::map<uint32_t, uint32_t>& Memory::getInstructionMemory() const {
 }
 
 
-const std::map<uint32_t, uint8_t>& Memory::getDataMemory() const {
+const std::map<uint32_t, int>& Memory::getDataMemory() const {
     return dataMemory;
 }
 
@@ -83,7 +83,7 @@ void Memory::dumpStack() {
     bool first = true;
     for (const auto& [addr, val] : stackMemory) {
         if (!first) std::cout << ",";
-        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << val;
+        std::cout << "\"0x" << std::hex << std::setw(8) << std::setfill('0') << addr << "\": " << std::dec << (int)val;
         first = false;
     }
 }

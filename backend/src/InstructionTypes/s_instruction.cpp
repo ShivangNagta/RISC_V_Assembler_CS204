@@ -33,10 +33,6 @@ uint32_t SInstruction::getFunct3() const {
     return funct3;
 }
 
-int32_t SInstruction::getImm() const {
-    return imm;
-}
-
 uint32_t SInstruction::getRS1() const {
     return rs1;
 }
@@ -45,15 +41,19 @@ uint32_t SInstruction::getRS2() const {
     return rs2;
 }
 
+int32_t SInstruction::getImm() const {
+    return imm;
+}
+
 void SInstruction::execute(Cpu& cpu) const {
     // Calculate effective address
-    uint32_t addr = cpu.RA + imm; // Address calculation (rs1 + imm)
-    cpu.RZ = addr;  // Store address in RZ
+    uint32_t addr = cpu.RA + imm;
+    cpu.RZ = addr;  // Store address in memory register
     std::string comment = "save execute, should not print";
     
     // Get value to store
-    int32_t value = cpu.RB; // Value to store (from rs2)
-    cpu.RM = value;  // Store value in RM
+    int32_t value = cpu.RB;
+    cpu.RM = value;  // Store value in Y register
 
     comment = "[Execute] S-format instruction " + instrName + " executed. Effective address: " + std::to_string(addr) + ", Value to store: " + std::to_string(value);
     if (cpu.pipeline) {
@@ -69,39 +69,90 @@ void SInstruction::memory_update(Cpu& cpu) const {
     int32_t value = cpu.RM;  // Value to store (from rs2)
     std::string comment = "save memory, should not print";
     
+    std::string targetMemory = "not decided";
+    // Range checking instead of map existence
+    if (addr >= cpu.memory.STACK_START && addr < cpu.memory.STACK_END) {
+        targetMemory = "STACK";
+    } else if (addr >= cpu.memory.DATA_START && addr < cpu.memory.DATA_END) {
+        targetMemory = "DATA";
+    } else {
+        comment = "[Memory] Error: Address " + std::to_string(addr) + " not in stack/data segment.";
+        if (cpu.pipeline) {
+            cpu.memory.pipelineComments.push_back(comment);
+        } else {
+            cpu.memory.comment = comment;
+        }
+        return;
+    }
+
     // Perform the store based on funct3
     if (funct3 == 0b000) {  // sb (store byte)
+        if (targetMemory == "STACK") {
+            cpu.memory.stackMemory[addr] = value & 0xFF;
+        } else if (targetMemory == "DATA") {
         cpu.memory.dataMemory[addr] = value & 0xFF;
+        } else {
+            comment = "[Memory] Error: Address " + std::to_string(addr) + " not in stack/data segment.";
+            return;
+        }
         comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr); 
     }
     else if (funct3 == 0b001) {  // sh (store halfword)
-        
-        cpu.memory.dataMemory[addr] = value & 0xFF;
-        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        if (targetMemory == "STACK") {
+            cpu.memory.stackMemory[addr] = value & 0xFF;
+            cpu.memory.stackMemory[addr + 1] = (value >> 8) & 0xFF;
+        } else if (targetMemory == "DATA") {
+            cpu.memory.dataMemory[addr] = value & 0xFF;
+            cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+        } else {
+            comment = "[Memory] Error: Address " + std::to_string(addr) + " not in stack/data segment.";
+            return;
+        }
         comment = "[Memory] SB: Stored halfword " + std::to_string(value) + " to address " + std::to_string(addr);
     }
     else if (funct3 == 0b010) {  // sw (store word)
         
-        cpu.memory.dataMemory[addr] = value & 0xFF;
-        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
-
+        if (targetMemory == "STACK") {
+            cpu.memory.stackMemory[addr] = value & 0xFF;
+            cpu.memory.stackMemory[addr + 1] = (value >> 8) & 0xFF;
+            cpu.memory.stackMemory[addr + 2] = (value >> 16) & 0xFF;
+            cpu.memory.stackMemory[addr + 3] = (value >> 24) & 0xFF;
+        } else if (targetMemory == "DATA") {
+            cpu.memory.dataMemory[addr] = value & 0xFF;
+            cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+            cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+            cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+        } else {
+            comment = "[Memory] Error: Address " + std::to_string(addr) + " not in stack/data segment.";
+            return;
+        }
         comment = "[Memory] SB: Stored word " + std::to_string(value) + " to address " + std::to_string(addr);
     }
     else if (funct3 == 0b011) {  // sd (store doubleword)
-        
-        // For simplicity, we'll just store the lower 32 bits
-        cpu.memory.dataMemory[addr] = value & 0xFF;
-        cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
-        cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
-        cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
-        // Zero out the upper 32 bits
-        cpu.memory.dataMemory[addr + 4] = 0;
-        cpu.memory.dataMemory[addr + 5] = 0;
-        cpu.memory.dataMemory[addr + 6] = 0;
-        cpu.memory.dataMemory[addr + 7] = 0;
-
+        if (targetMemory == "STACK") {
+            cpu.memory.stackMemory[addr] = value & 0xFF;
+            cpu.memory.stackMemory[addr + 1] = (value >> 8) & 0xFF;
+            cpu.memory.stackMemory[addr + 2] = (value >> 16) & 0xFF;
+            cpu.memory.stackMemory[addr + 3] = (value >> 24) & 0xFF;
+            // Zero out the upper 32 bits
+            cpu.memory.stackMemory[addr + 4] = 0;
+            cpu.memory.stackMemory[addr + 5] = 0;
+            cpu.memory.stackMemory[addr + 6] = 0;
+            cpu.memory.stackMemory[addr + 7] = 0;
+        } else if (targetMemory == "DATA") {
+            cpu.memory.dataMemory[addr] = value & 0xFF;
+            cpu.memory.dataMemory[addr + 1] = (value >> 8) & 0xFF;
+            cpu.memory.dataMemory[addr + 2] = (value >> 16) & 0xFF;
+            cpu.memory.dataMemory[addr + 3] = (value >> 24) & 0xFF;
+            // Zero out the upper 32 bits
+            cpu.memory.dataMemory[addr + 4] = 0;
+            cpu.memory.dataMemory[addr + 5] = 0;
+            cpu.memory.dataMemory[addr + 6] = 0;
+            cpu.memory.dataMemory[addr + 7] = 0;
+        } else {
+            comment = "[Memory] Error: Address " + std::to_string(addr) + " not in stack/data segment.";
+            return;
+        }
         comment = "[Memory] SB: Stored byte " + std::to_string(value) + " to address " + std::to_string(addr);
     }
     else {
