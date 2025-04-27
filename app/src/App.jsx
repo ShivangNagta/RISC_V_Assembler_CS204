@@ -92,6 +92,7 @@ done:
     setAssembled(false);
     setPipelineEnabled(false)
     setDataForwardingEnabled(false)
+    setBranchPredictionEnabled(false)
     setdataSegment({});
     setStack({});
     setRegisters({});
@@ -142,6 +143,24 @@ done:
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      
+      // Get cursor position
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      
+      const newText = editorContent.substring(0, start) + "    " + editorContent.substring(end);
+      
+      setEditorContent(newText);
+      
+      setTimeout(() => {
+        e.target.selectionStart = e.target.selectionEnd = start + 4;
+      }, 0);
+    }
+  };
+
   const togglePipeline = async () => {
     const newValue = !pipelineEnabled;
     const id = localStorage.getItem("id") ?? ""
@@ -178,170 +197,294 @@ done:
   const [rightTab, setRightTab] = useState("registers");
 
   return (
-    <div className="p-4 w-full h-screen flex flex-col bg-black text-gray-200 font-mono overflow-hidden">
-      <div className="flex flex-wrap justify-center md:w-2/3 border-b border-gray-700 mb-4 mx-auto">
-        <div onClick={() => setActiveTab("editor")} className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "editor" ? "bg-gray-800" : "bg-gray-900"}`}>
-          Editor
-        </div>
-        <div onClick={() => setActiveTab("simulator")} className={`p-2 cursor-pointer flex-1 text-center ${activeTab === "simulator" ? "bg-gray-800" : "bg-gray-900"}`}>
-          Simulator
+    <div className="w-full h-screen flex flex-col bg-black text-zinc-200 font-mono overflow-hidden">
+      {/* Header/Navigation */}
+      <div className="bg-zinc-950 border-b border-zinc-800 p-3 flex-shrink-0">
+        <div className="flex flex-wrap justify-center max-w-4xl mx-auto">
+          <div 
+            onClick={() => setActiveTab("editor")} 
+            className={`p-2 px-6 cursor-pointer rounded-t-lg text-center transition-colors duration-200 
+              ${activeTab === "editor" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"}`}
+          >
+            Editor
+          </div>
+          <div 
+            onClick={() => setActiveTab("simulator")} 
+            className={`p-2 px-6 cursor-pointer rounded-t-lg text-center transition-colors duration-200
+              ${activeTab === "simulator" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"}`}
+          >
+            Simulator
+          </div>
         </div>
       </div>
 
-      {activeTab === "editor" ? (
-        <textarea
-          className="w-full h-full bg-gray-900 p-3 text-green-400 border border-gray-700 text-sm md:text-base resize-none"
-          value={editorContent}
-          onChange={(e) => setEditorContent(e.target.value)}
-          placeholder="Write your RISC-V code here..."
-        />
-      ) : (
-        <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
-          <div className="w-full md:w-2/3 border-r border-gray-700 p-2 flex flex-col h-full">
-            <div className="flex flex-wrap justify-center gap-2 bg-gray-900 p-2 sticky top-0 z-10">
-              <button onClick={handleStep} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Step</button>
-              <button onClick={handleRun} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Run</button>
-              <button onClick={handleReset} className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-sm">Reset</button>
-              <button onClick={assembleCode} className="px-3 py-1 bg-purple-700 hover:bg-purple-600 rounded text-white text-sm">Assemble</button>
-              <button
-                onClick={togglePipeline}
-                disabled={!assembled}
-                className={`px-3 py-1 rounded text-sm ${assembled ? ( pipelineEnabled ? "bg-green-700" : "bg-gray-700" )
-                  : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                } `}>
-                Pipeline {pipelineEnabled ? "On" : "Off"}
+      {/* Main Content */}
+      <div className="flex-grow flex flex-col overflow-hidden">
+        {activeTab === "editor" ? (
+          <div className="h-full p-4 flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-2 flex-shrink-0">
+              <h2 className="text-zinc-300 text-lg">RISC-V Assembly Editor</h2>
+              <button 
+                onClick={assembleCode} 
+                disabled={loading}
+                className="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded text-white text-sm transition-colors flex items-center shadow-lg disabled:bg-zinc-700 disabled:cursor-not-allowed"
+              >
+                {loading ? "Assembling..." : "Assemble Code"}
               </button>
-
-              <button
-                onClick={toggleDataForwarding}
-                disabled={!pipelineEnabled}
-                className={`px-3 py-1 rounded text-sm 
-    ${pipelineEnabled
-                    ? (dataForwardingEnabled ? "bg-green-700" : "bg-gray-700")
-                    : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                  }`}>
-                Forwarding {dataForwardingEnabled ? "On" : "Off"}
-              </button>
-
-              <button
-                onClick={toggleBranchPrediction}
-                disabled={!dataForwardingEnabled}
-                className={`px-3 py-1 rounded text-sm 
-    ${dataForwardingEnabled
-                    ? (branchPredictionEnabled ? "bg-green-700" : "bg-gray-700")
-                    : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                  }`}>
-                Branch Prediction {branchPredictionEnabled ? "On" : "Off"}
-              </button>
-
             </div>
-
-            <div className="overflow-auto flex-grow border border-gray-700">
-              <table className="w-full text-center text-sm border-collapse">
-                <thead className="sticky top-0 bg-gray-800">
-                  <tr className="border-b border-gray-700">
-                    <th className="p-2">PC</th>
-                    <th className="p-2">Machine Code</th>
-                    <th className="p-2">Stage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                {machineCode.map((inst, index) => {
-                const currentStage = Object.entries(pipelineInstructions).find(
-                    ([stage, pc]) => pc === inst.pc && pc !== "0x00002710"
-                  )?.[0]; // returns the stage name like 'F', 'D', etc.
-
-                  return (
-                    <tr key={index} className={`${stageColor[currentStage] || "bg-black-900"} border-b border-gray-800`}>
-                      <td className="p-2">{inst.pc}</td>
-                      <td className="p-2">{inst.machineCode}</td>
-                      <td className="p-2 capitalize">{currentStage || '-'}</td>
-                    </tr>
-                  );
-                })}
-
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-2 bg-black text-lime-400 p-2 border-t border-l border-r border-gray-700 rounded-b h-10 overflow-auto text-sm">
-              <strong className="text-gray-400">Clock Cycles : {clockCycles}</strong>
-            </div>
-            <div className="mt-2 bg-black text-lime-400 p-2 border-t border-l border-r border-gray-700 rounded-b h-24 overflow-auto text-sm">
-              <strong className="text-gray-400">Console:</strong>
-              <div className="whitespace-pre-wrap">{comment}</div>
-            </div>
+            <textarea
+              className="w-full flex-grow bg-zinc-900 p-4 text-green-400 border border-zinc-700 text-sm md:text-base resize-none rounded shadow-inner focus:outline-none focus:border-zinc-500 overflow-auto"
+              value={editorContent}
+              onChange={(e) => setEditorContent(e.target.value)}
+              onKeyDown={handleKeyDown} // Add the key down handler here
+              placeholder="Write your RISC-V code here..."
+            />
+            {error && (
+              <div className="mt-2 p-2 bg-red-900 border border-red-700 text-red-100 rounded">
+                {error}
+              </div>
+            )}
           </div>
+        ) : (
+          <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
+            {/* Left panel - Simulator */}
+            <div className="w-full md:w-2/3 border-r border-zinc-800 flex flex-col h-full overflow-hidden">
+              {/* Control Panel */}
+              <div className="bg-zinc-900 p-3 border-b border-zinc-800 flex flex-wrap justify-between items-center gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-wrap">
+                  <button 
+                    onClick={handleStep} 
+                    className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-sm transition-colors shadow-md"
+                  >
+                    Step
+                  </button>
+                  <button 
+                    onClick={handleRun} 
+                    className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-sm transition-colors shadow-md"
+                  >
+                    Run
+                  </button>
+                  <button 
+                    onClick={handleReset} 
+                    className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-sm transition-colors shadow-md"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={togglePipeline}
+                    disabled={!assembled}
+                    className={`px-3 py-2 rounded text-sm transition-colors shadow-md
+                      ${assembled 
+                        ? (pipelineEnabled ? "bg-green-700 hover:bg-green-600" : "bg-zinc-700 hover:bg-zinc-600") 
+                        : "bg-zinc-900 text-zinc-600 cursor-not-allowed"
+                      }`}
+                  >
+                    Pipeline {pipelineEnabled ? "On" : "Off"}
+                  </button>
+                  <button
+                    onClick={toggleDataForwarding}
+                    disabled={!pipelineEnabled}
+                    className={`px-3 py-2 rounded text-sm transition-colors shadow-md
+                      ${pipelineEnabled
+                        ? (dataForwardingEnabled ? "bg-green-700 hover:bg-green-600" : "bg-zinc-700 hover:bg-zinc-600")
+                        : "bg-zinc-900 text-zinc-600 cursor-not-allowed"
+                      }`}
+                  >
+                    Forwarding {dataForwardingEnabled ? "On" : "Off"}
+                  </button>
+                  <button
+                    onClick={toggleBranchPrediction}
+                    disabled={!dataForwardingEnabled}
+                    className={`px-3 py-2 rounded text-sm transition-colors shadow-md
+                      ${dataForwardingEnabled
+                        ? (branchPredictionEnabled ? "bg-green-700 hover:bg-green-600" : "bg-zinc-700 hover:bg-zinc-600")
+                        : "bg-zinc-900 text-zinc-600 cursor-not-allowed"
+                      }`}
+                  >
+                    Branch Prediction {branchPredictionEnabled ? "On" : "Off"}
+                  </button>
+                </div>
+              </div>
 
-          <div className="w-full md:w-1/3 p-2 flex flex-col h-full border-l border-gray-700">
-            <div className="flex border-b border-gray-700 justify-center mb-2">
-              <div onClick={() => setRightTab("registers")} className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "registers" ? "bg-gray-800" : "bg-gray-900"}`}>Registers</div>
-              <div onClick={() => setRightTab("memory")} className={`p-2 cursor-pointer flex-1 text-center ${rightTab === "memory" ? "bg-gray-800" : "bg-gray-900"}`}>Memory</div>
-            </div>
-            <div className="overflow-auto max-h-screen border border-gray-700 p-2 text-sm">
-              {rightTab === "registers"
-                ? ( <> 
-                <h1 className='mt-2 text-2xl' >Registers </h1>
-                {Object.entries(registers).map(([name, value], i) => (
-                  <div key={i} className="flex justify-between border-b border-gray-700 py-1">
-                    <span>{name}</span>
-                    <span>{value}</span>
+              {/* Instruction Table */}
+              <div className="overflow-auto flex-grow bg-zinc-950 relative">
+                <div className="min-w-full h-full">
+                  <table className="min-w-full text-center text-sm border-collapse">
+                    <thead className="sticky top-0 bg-zinc-950 z-10">
+                      <tr className="border-b border-zinc-800">
+                        <th className="p-3 text-zinc-400 w-1/4">PC</th>
+                        <th className="p-3 text-zinc-400 w-1/2">Machine Code</th>
+                        <th className="p-3 text-zinc-400 w-1/4">Stage</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800">
+                      {machineCode.map((inst, index) => {
+                        const currentStage = Object.entries(pipelineInstructions).find(
+                          ([stage, pc]) => pc === inst.pc && pc !== "0x00002710"
+                        )?.[0];
+
+                        return (
+                          <tr 
+                            key={index} 
+                            className={`${stageColor[currentStage] || "hover:bg-zinc-900"} border-b border-zinc-800 transition-colors`}
+                          >
+                            <td className="p-2 font-mono">{inst.pc}</td>
+                            <td className="p-2 font-mono">{inst.machineCode}</td>
+                            <td className="p-2 capitalize">{currentStage || '-'}</td>
+                          </tr>
+                        );
+                      })}
+                      {machineCode.length === 0 && (
+                        <tr>
+                          <td colSpan="3" className="p-6 text-zinc-500 text-center">
+                            No instructions loaded. Assemble your code first.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Status Panels */}
+              <div className="flex-shrink-0 p-2 bg-zinc-950">
+                <div className="bg-zinc-950 text-lime-400 p-2 border border-zinc-800 rounded h-10 overflow-auto text-sm shadow-inner">
+                  <strong className="text-zinc-400">Clock Cycles: </strong>{clockCycles}
+                </div>
+                <div className="mt-2 bg-zinc-950 text-lime-400 p-2 border border-zinc-800 rounded h-34 overflow-auto text-sm shadow-inner">
+                  <strong className="text-zinc-400">Console:</strong>
+                  <div className="whitespace-pre-wrap mt-1">{comment || "No output"}</div>
+                </div>
+                {error && (
+                  <div className="mt-2 p-2 bg-red-900 border border-red-700 text-red-100 rounded">
+                    {error}
                   </div>
-                ))}
-                
-               
-                  </>
-                ) : (
-                  <>
-                    <h2 className="text-gray-400 mb-1">Stack</h2>
-                    {Object.entries(stack).map(([addr, value], i) => (
-                      <div key={i} className="flex justify-between border-b border-gray-700 py-1">
-                        <span>{addr}</span>
-                        <span>{value}</span>
-                      </div>
-                    ))}
-                    <h2 className="text-gray-400 mt-3 mb-1">Data Segment</h2>
-                    {Object.entries(dataSegment).map(([addr, value], i) => (
-                      <div key={i} className="flex justify-between border-b border-gray-700 py-1">
-                        <span>{addr}</span>
-                        <span>{value}</span>
-                      </div>
-                    ))}
-                  </>
                 )}
+              </div>
             </div>
-            <div className="mt-8 bg-black p-2 border-t border-l border-r border-gray-700 rounded-b h-60 overflow-auto">
-                <h1 className='mt-2 text-2xl' >Pipeline Registers </h1>
-                  <div className="flex justify-between border-b border-gray-700 py-1">
-                    <span>RA : </span>
-                    <span>{ra}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-700 py-1">
-                    <span>RB : </span>
-                    <span>{rb}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-700 py-1">
-                    <span>RY : </span>
-                    <span>{ry}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-700 py-1">
-                    <span>RZ : </span>
-                    <span>{rz}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-700 py-1">
-                    <span>RM : </span>
-                    <span>{rm}</span>
+
+            {/* Right panel - Registers/Memory */}
+            <div className="w-full md:w-1/3 flex flex-col h-full bg-zinc-950 overflow-hidden">
+              <div className="flex border-b border-zinc-800 flex-shrink-0">
+                <div 
+                  onClick={() => setRightTab("registers")} 
+                  className={`p-3 cursor-pointer flex-1 text-center transition-colors
+                    ${rightTab === "registers" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"}`}
+                >
+                  Registers
+                </div>
+                <div 
+                  onClick={() => setRightTab("memory")} 
+                  className={`p-3 cursor-pointer flex-1 text-center transition-colors
+                    ${rightTab === "memory" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"}`}
+                >
+                  Memory
+                </div>
+              </div>
+
+              {/* Content based on selected tab - Scrollable */}
+              <div className="overflow-auto flex-grow m-2">
+                <div className="border border-zinc-800 p-3 text-sm bg-zinc-950 shadow-inner rounded h-full">
+                  {rightTab === "registers" ? (
+                    <>
+                      <h1 className="mb-3 text-xl font-bold text-zinc-300 border-b border-zinc-800 pb-2 sticky top-0 bg-zinc-950 z-10">Registers</h1>
+                      <div className="space-y-1">
+                        {Object.entries(registers).length > 0 ? (
+                          Object.entries(registers).map(([name, value], i) => (
+                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+                              <span className="font-mono text-zinc-300">{name}</span>
+                              <span className="font-mono text-lime-400">{value}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-zinc-500 text-center py-4">No register data available</div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-6">
+                        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">Stack Segment</h2>
+                        {Object.entries(stack).length > 0 ? (
+                          Object.entries(stack).map(([addr, value], i) => (
+                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+                              <span className="font-mono text-zinc-300">{addr}</span>
+                              <span className="font-mono text-lime-400">{value}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-zinc-500 text-center py-2">No stack data available</div>
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">Data Segment</h2>
+                        {Object.entries(dataSegment).length > 0 ? (
+                          Object.entries(dataSegment).map(([addr, value], i) => (
+                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+                              <span className="font-mono text-zinc-300">{addr}</span>
+                              <span className="font-mono text-lime-400">{value}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-zinc-500 text-center py-2">No data segment available</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Pipeline Registers and Data Forwarding - Fixed height sections */}
+              <div className="flex-shrink-0 overflow-hidden">
+                {/* Pipeline Registers Panel */}
+                <div className="bg-zinc-950 border border-zinc-800 rounded shadow-inner m-2 overflow-auto max-h-70">
+                  <h1 className="p-2 text-lg font-bold text-zinc-300 border-b border-zinc-800 sticky top-0 bg-zinc-950 z-10">Pipeline Registers</h1>
+                  <div className="p-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 text-xs mb-1">RA</div>
+                        <div className="font-mono text-lime-400">{ra}</div>
+                      </div>
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 text-xs mb-1">RB</div>
+                        <div className="font-mono text-lime-400">{rb}</div>
+                      </div>
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 text-xs mb-1">RY</div>
+                        <div className="font-mono text-lime-400">{ry}</div>
+                      </div>
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 text-xs mb-1">RZ</div>
+                        <div className="font-mono text-lime-400">{rz}</div>
+                      </div>
+                      <div className="bg-zinc-900 p-2 rounded border border-zinc-800 col-span-2">
+                        <div className="text-zinc-400 text-xs mb-1">RM</div>
+                        <div className="font-mono text-lime-400">{rm}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-            <div className="mt-8 bg-black p-2 border-t border-l border-r border-gray-700 rounded-b h-100 overflow-auto">
-            <h1 className='mt-2 text-2xl' >Data Forwarding </h1>
-                <strong className="text-gray-400">{dataForwardPath.fromBuffer === undefined || dataForwardPath.fromBuffer === '' ? 'No Data Forwarding' :
-                `Data Forwarding from '${dataForwardPath.fromBuffer}' to '${dataForwardPath.toBuffer}'` }</strong>
+                {/* Data Forwarding Panel */}
+                <div className="mb-2 bg-zinc-950 border border-zinc-800 rounded shadow-inner m-2 overflow-auto max-h-34">
+                  <h1 className="p-2 text-lg font-bold text-zinc-300 border-b border-zinc-800 sticky top-0 bg-zinc-950 z-10">Data Forwarding</h1>
+                  <div className="p-4">
+                    {dataForwardPath.fromBuffer === undefined || dataForwardPath.fromBuffer === '' ? (
+                      <div className="text-zinc-500">No Data Forwarding</div>
+                    ) : (
+                      <div className="text-lime-400">
+                        Data Forwarding from <span className="font-bold">{dataForwardPath.fromBuffer}</span> to <span className="font-bold">{dataForwardPath.toBuffer}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -13,9 +13,10 @@ app.use(cors());
 let users = new Map()
 
 app.post("/assemble", (req, res) => {
-    let { id, code } = req.body
-    let session
-    let error = false
+    let { id, code } = req.body;
+    let session;
+    let error = false;
+
     if (!id || !users.has(id)) {
         id = uuidv4();
         const __filename = fileURLToPath(import.meta.url);
@@ -31,46 +32,43 @@ app.post("/assemble", (req, res) => {
         });
 
         child.stderr.on("data", (data) => {
-            error = true
+            error = true;
             session.output += data.toString();
         });
-
     } else {
         session = users.get(id);
     }
+
     session.output = ""; 
+
     session.child.stdin.write("assemble\n");
-    // const cod = {
-    //     "input_code": "add x1, x2, x3\naddi x3, x4, 10\n"
-    // }
-    const input_code = {
-        "input_code": code
-    }
-    // console.log(JSON.stringify(input_code))
-    session.child.stdin.write(JSON.stringify(input_code)+"\n");
+    const input_code = { "input_code": code };
+    session.child.stdin.write(JSON.stringify(input_code) + "\n");
 
-    console.log([...users.keys()])
-
+    console.log([...users.keys()]);
 
     setTimeout(() => {
-        console.log(session.output)
+        console.log(session.output);
         if (error) {
-            res.status(400).json({ error: session.output });
-        }else{
+            // Child process reported error
+            res.status(400).json({ error: session.output.trim() });
+        } else {
             try {
                 const assembledJSON = JSON.parse(session.output);
-                console.log(assembledJSON)
+                console.log(assembledJSON);
                 res.json({
                     machine_code: assembledJSON.machine_code,
                     data_segment: assembledJSON.data_segment,
                     id,
                 });
             } catch (err) {
-                res.status(500).json({ error: "Invalid output from assembler" });
+                console.error("JSON parse error:", err);
+                res.status(400).json({ error: "Assembler output was not valid JSON." });
             }
         }
     }, 1000);
 });
+
 
 app.post("/step", (req,res) => {
     let { id } = req.body
