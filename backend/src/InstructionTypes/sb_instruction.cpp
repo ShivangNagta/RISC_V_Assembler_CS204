@@ -72,11 +72,16 @@ void SBInstruction::execute(Cpu& cpu) const {
     
     // Calculate target address if condition is true
     if (condition) {
-        cpu.RZ = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
+        if (cpu.pipeline) {
+            cpu.PC = cpu.PC + imm - 8;
+        } else {
+            cpu.PC = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
+        }
         comment = "[Execute] Branch taken. Target address = " + std::to_string(cpu.RM);
+        cpu.RZ = 0;
     } 
     else {
-        cpu.RZ = cpu.PC;
+        cpu.RZ = 0;
         comment = "[Execute] Branch not taken.";
     }
 
@@ -100,7 +105,7 @@ void SBInstruction::memory_update(Cpu& cpu) const {
 
 void SBInstruction::writeback(Cpu& cpu) const {
     // Branch instructions update PC based on the condition evaluated in execute
-    cpu.PC = cpu.RY;  // RM contains either PC+4 or branch target from execute stage
+    // cpu.PC = cpu.RY;  // RM contains either PC+4 or branch target from execute stage
 
     std::string comment = "[Writeback] Branch instruction executed. PC updated to " + std::to_string(cpu.PC);
     if (cpu.pipeline) {

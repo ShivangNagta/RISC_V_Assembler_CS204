@@ -136,6 +136,7 @@ void RInstruction::execute(Cpu& cpu) const {
 
 void RInstruction::memory_update(Cpu& cpu) const {
     // No memory update for R-type instructions
+    cpu.RY = cpu.RZ;
     std::string comment = "[Memory] No memory update for R-type instruction " + instrName;
     if (cpu.pipeline) {
         cpu.memory.pipelineComments.push_back(comment);

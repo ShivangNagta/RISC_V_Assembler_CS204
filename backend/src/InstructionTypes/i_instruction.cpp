@@ -96,6 +96,7 @@ void IInstruction::memory_update(Cpu& cpu) const {
     // Only handle memory operations for load instructions
     if (op != 0b0000011) {
         // For non-load I-format instructions (addi, jalr, etc.), use default behavior
+        cpu.RY = cpu.RZ;
         std::string comment = "[Memory] I-format instruction " + instrName + " does not require memory update.";
         if (cpu.pipeline) {
             cpu.memory.pipelineComments.push_back(comment);

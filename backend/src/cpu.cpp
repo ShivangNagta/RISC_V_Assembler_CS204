@@ -49,7 +49,12 @@ void Cpu::fetch()
         std::cerr << "[Fetch] Error: Instruction at PC 0x" << std::hex << PC << " not found.\n";
         return;
     }
-    
+
+    if (PC == memory.exitAddress) {
+        IR = 0;
+        PC += 4;
+        return;
+    }
 
     IR = memory.instructionMemory[PC];
 
@@ -69,7 +74,12 @@ void Cpu::fetch()
 
 void Cpu::decode()
 {
-    currentInstruction = decodeInstructionFun(IR);
+    currentInstruction = decodeInstructionFun(IR);       
+    uint32_t rs1 = currentInstruction->getRS1();
+    uint32_t rs2 = currentInstruction->getRS2();
+    RA = registers[rs1];
+    if (rs2 != 32) RB = registers[rs2];
+    else RB = currentInstruction->getImm();
     currentInstruction->instructionPC = PC - 4; // Store the instruction PC for later use
     if (!currentInstruction)
     {
@@ -92,7 +102,7 @@ void Cpu::decode()
             for (int i = 0; i < 5; ++i) {
                 // check rs1
                 if (rs1 != 32 && rs1 == rdVec[i]) {
-                    std::cout << "rs1: " << rs1 << " rdVec[i]: " << rdVec[i] << std::endl;
+                    // std::cout << "rs1: " << rs1 << " rdVec[i]: " << rdVec[i] << std::endl;
                     if (data_forward) {
                         checkDataForwarding(decodedInstruction, i, 0);
                         continue;
@@ -143,7 +153,7 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
     {
     case 2: // from instr is memoryAccessedInstruction, i.e., forward from prev to prev ins
             // M to E
-        std::cout << "M to E" << std::endl;
+        // std::cout << "M to E" << std::endl;
         if (rsNo == 0) {
             dataForwardMap[{memoryAccessedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
         } else {
@@ -164,7 +174,7 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
                 dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
             }
         } else { // E to E for anything else
-            std::cout << "E to E" << std::endl;
+            // std::cout << "E to E" << std::endl;
             if (rsNo == 0) {
                 dataForwardMap[{executedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RZ, Buffers::RA };
             } else {
@@ -194,8 +204,8 @@ void Cpu::doDataForwarding() {
     for (auto& [key, value] : dataForwardMap) {
         auto [fromPC, toPC] = key;
         auto [fromBuffer, toBuffer] = value;
-        std::cout << "[Data Forwarding] Data Forwarding from " << std::hex << fromPC << " to " << std::hex << toPC << std::endl;
-        std::cout << "[Data Forwarding] Data Forwarding from " << bufferTypeToString(fromBuffer) << " to " << bufferTypeToString(toBuffer) << std::endl;
+        // std::cout << "[Data Forwarding] Data Forwarding from " << std::hex << fromPC << " to " << std::hex << toPC << std::endl;
+        // std::cout << "[Data Forwarding] Data Forwarding from " << bufferTypeToString(fromBuffer) << " to " << bufferTypeToString(toBuffer) << std::endl;
         if (fromBuffer == Buffers::RY) {
             if (toBuffer == Buffers::RA) {
                 RA = RY;
@@ -412,7 +422,7 @@ void Cpu::execute()
     if (pipeline) {
         decodedInstruction->execute(*this);
         executedInstruction = std::move(decodedInstruction);
-    
+ 
     } else {
         currentInstruction->execute(*this);
     }
@@ -455,15 +465,15 @@ void Cpu::write_back()
 void Cpu::step()
 {
     if (pipeline) {
-
-        if (PC == memory.exitAddress) {
-            std::stringstream ss;
-            ss << "Successfully Exited";
-            memory.comment = ss.str();
-            return;
-        }
+        uint32_t oldPC = PC;
         if (memoryAccessedInstruction != nullptr) {
             write_back();
+            if (executedInstruction == nullptr && decodedInstruction == nullptr && memoryAccessedInstruction == nullptr) {
+                std::stringstream ss;
+                ss << "Successfully Exited";
+                memory.comment = ss.str();
+                return;
+            }
         }
         if (executedInstruction != nullptr) {
             memory_update();
@@ -476,10 +486,16 @@ void Cpu::step()
         }
         if (numberOfBubbles == 0) {
             fetch();
+            if (oldPC != PC - 4) {
+                decodedInstruction = nullptr;
+            }
         } else {
             std::stringstream ss;
             ss << "Stalling for instruction at PC : " << PC - 4;
             memory.pipelineComments.push_back(ss.str());
+            if (oldPC != PC) {
+                decodedInstruction = nullptr;
+            }
         }
 
         clock++;
@@ -490,7 +506,7 @@ void Cpu::step()
         numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
         
         // std::cout << "[Clock] Cycle: " << clock << "\n";
-        std::cout << "Bubbles: " << numberOfBubbles << "\n";
+        // std::cout << "Bubbles: " << numberOfBubbles << "\n";
         
         instructionMap["F"] = PC-4;
         instructionMap["D"] = stalledInstruction? stalledInstruction->instructionPC : (decodedInstruction? decodedInstruction->instructionPC : 10000);
@@ -502,9 +518,11 @@ void Cpu::step()
         //     std::cout << key << ": " << value << "\n";
         //     // }
         // }
+
         if (data_forward){
             doDataForwarding();
         }
+
     } else {
         // No pipelining
         switch (currentStep)
@@ -547,16 +565,23 @@ void Cpu::step()
 
 void Cpu::run()
 {
-    while (memory.instructionMemory.find(PC) != memory.instructionMemory.end())
-    {
-
-        
-        for (int i = 0; i < 5; ++i) {
-            if (memory.comment == "Successfully Exited") return;
+    if (pipeline) {
+        while (memory.comment != "Successfully Exited") {
             step();
         }
-        currentStep = FETCH;
+    } else {
+        while (memory.instructionMemory.find(PC) != memory.instructionMemory.end())
+        {
+                for (int i = 0; i < 5; ++i) {
+                    if (memory.comment == "Successfully Exited") return;
+                    step();
+                }
+                currentStep = FETCH;
+            
+          
+        }
     }
+
     // std::cout << "[Program Finished] Total clock cycles: " << clock << "\n";
 }
 

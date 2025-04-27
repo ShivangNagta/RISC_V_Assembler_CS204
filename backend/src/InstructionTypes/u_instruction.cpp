@@ -46,7 +46,7 @@ void UInstruction::execute(Cpu& cpu) const {
         // std::cout << "[Execute] AUIPC: x" << rd << " = PC + " << imm << " (" << cpu.PC << " + " << imm << " = " << cpu.RY << ")" << std::endl;
     }
 
-    std::string comment = "[Execute] U-type instruction " + instrName + " executed and result: " + std::to_string(cpu.RY);
+    std::string comment = "[Execute] U-type instruction " + instrName + " executed and result: " + std::to_string(cpu.RZ);
     if (cpu.pipeline) {
         cpu.memory.pipelineComments.push_back(comment);
     } else {

@@ -11,6 +11,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [pipelineEnabled, setPipelineEnabled] = useState(false);
+  const [assembled, setAssembled] = useState(false)
   const [dataForwardingEnabled, setDataForwardingEnabled] = useState(false);
   const [pipelineInstructions, setPipelineInstructions] = useState({})
   const [editorContent, setEditorContent] = useState(`#Default
@@ -67,6 +68,7 @@ done:
     setLoading(true);
     setError("");
     try {
+      setAssembled(true)
       let id = localStorage.getItem("id") ?? "";
       const response = await axios.post("http://localhost:3000/assemble", { id, code: editorContent });
       setMachineCode(response.data.machine_code);
@@ -80,6 +82,9 @@ done:
 
   const handleReset = () => {
     localStorage.setItem("id", "");
+    setAssembled(false);
+    setPipelineEnabled(false)
+    setDataForwardingEnabled(false)
     setdataSegment({});
     setStack({});
     setRegisters({});
@@ -172,7 +177,10 @@ done:
               <button onClick={assembleCode} className="px-3 py-1 bg-purple-700 hover:bg-purple-600 rounded text-white text-sm">Assemble</button>
               <button
                 onClick={togglePipeline}
-                className={`px-3 py-1 rounded text-sm ${pipelineEnabled ? "bg-green-700" : "bg-gray-700"}`}>
+                disabled={!assembled}
+                className={`px-3 py-1 rounded text-sm ${assembled ? ( pipelineEnabled ? "bg-green-700" : "bg-gray-700" )
+                  : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                } `}>
                 Pipeline {pipelineEnabled ? "On" : "Off"}
               </button>
 
