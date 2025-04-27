@@ -98,51 +98,53 @@ void Cpu::decode()
         RA = registers[rs1];
         if (rs2 != 32) RB = registers[rs2];
         else RB = decodedInstruction->getImm();
-        // if (!data_forward){
-            for (int i = 0; i < 5; ++i) {
-                // check rs1
-                if (rs1 != 32 && rs1 == rdVec[i]) {
-                    // std::cout << "rs1: " << rs1 << " rdVec[i]: " << rdVec[i] << std::endl;
-                    if (data_forward) {
-                        checkDataForwarding(decodedInstruction, i, 0);
-                        continue;
-                    }
-                    switch (i)
-                    {
-                    case 2:
-                        numberOfBubbles = 1;
-                        stalledInstruction = std::move(decodedInstruction);
-                        break;
-                    case 3:
-                        numberOfBubbles = 2;
-                        stalledInstruction = std::move(decodedInstruction);
-                        break;
-                    default:
-                        continue;
-                    }
+        for (int i = 0; i < 5; ++i) {
+            // check rs1
+            if (rs1 != 32 && rs1 == rdVec[i]) {
+                // std::cout << "rs1: " << rs1 << " rdVec[i]: " << rdVec[i] << std::endl;
+                if (data_forward) {
+                    checkDataForwarding(decodedInstruction, i, 0);
+                    continue;
                 }
-                if (rs2 != 32 && rs2 == rdVec[i]) {
-                    if (data_forward) {
-                        checkDataForwarding(decodedInstruction, i, 1);
-                        continue;
-                    }
-                    switch (i)
-                    {
-                    case 2:
-                        numberOfBubbles = std::max(1, numberOfBubbles);
-                        stalledInstruction = std::move(decodedInstruction);
-                        break;
-                    case 3:
-                        numberOfBubbles = std::max(2, numberOfBubbles);
-                        stalledInstruction = std::move(decodedInstruction);
-                        break;
-                    default:
-                        continue;
-                    }
+                switch (i)
+                {
+                case 2:
+                    numberOfBubbles = 1;
+                    stalledInstruction = std::move(decodedInstruction);
+                    break;
+                case 3:
+                    numberOfBubbles = 2;
+                    stalledInstruction = std::move(decodedInstruction);
+                    break;
+                default:
+                    continue;
                 }
             }
-        // }
-        
+            if (rs2 != 32 && rs2 == rdVec[i]) {
+                if (data_forward) {
+                    checkDataForwarding(decodedInstruction, i, 1);
+                    continue;
+                }
+                switch (i)
+                {
+                case 2:
+                    numberOfBubbles = std::max(1, numberOfBubbles);
+                    stalledInstruction = std::move(decodedInstruction);
+                    break;
+                case 3:
+                    numberOfBubbles = std::max(2, numberOfBubbles);
+                    stalledInstruction = std::move(decodedInstruction);
+                    break;
+                default:
+                    continue;
+                }
+            }
+        }
+        std::string instrName = decodedInstruction->getName();
+        if (predictionBool && (instrName == "JAL" || instrName == "JALR" || instrName == "BEQ" || 
+            instrName == "BNE" || instrName == "BLT" || instrName == "BGE")) {
+            branchPrediction(instrName, decodedInstruction->getImm());
+        }
         IR = 0;
     }
 }
@@ -229,6 +231,23 @@ void Cpu::doDataForwarding() {
 
     // clear the data forward map after use
     dataForwardMap.clear();
+}
+
+void Cpu::branchPrediction(std::string instrName, uint32_t imm) {
+    if (instrName == "JAL" || instrName == "JALR") {
+        // always taken
+        PC = PC + imm - 4;
+        
+    } else if (instrName == "BEQ" || instrName == "BNE" || instrName == "BLT" || instrName == "BGE") {
+        // 1 bit prediction
+        if (predictionBit) {
+            // taken
+            PC = PC + imm - 4;
+        } else {
+            // not taken
+        }
+        // correctness handled on execute of branch instruction
+    }
 }
 
 int32_t Cpu::signExtend(uint32_t value, uint32_t bits)
@@ -486,15 +505,15 @@ void Cpu::step()
         }
         if (numberOfBubbles == 0) {
             fetch();
-            if (oldPC != PC - 4) {
-                decodedInstruction = nullptr;
+            if (!predictionBool) {
+                if (oldPC != PC - 4) decodedInstruction = nullptr;
             }
         } else {
             std::stringstream ss;
             ss << "Stalling for instruction at PC : " << PC - 4;
             memory.pipelineComments.push_back(ss.str());
-            if (oldPC != PC) {
-                decodedInstruction = nullptr;
+            if (!predictionBool) {
+                if (oldPC != PC) decodedInstruction = nullptr;
             }
         }
 

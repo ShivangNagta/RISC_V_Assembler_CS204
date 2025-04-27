@@ -23,6 +23,8 @@ public:
     int32_t RY;       
     int32_t RZ;   
     uint64_t clock;
+    bool predictionBool  = false;
+    bool predictionBit = false;
 
     bool pipeline;
     bool data_forward;
@@ -69,6 +71,7 @@ public:
     // instr to check, index of rdVec, rsNo to check(rs1 or rs2, 0 for rs1, 1 for rs2)
     void checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, int indexOfRDVec, int rsNo);
     void doDataForwarding();
+    void branchPrediction(std::string instrName, uint32_t imm);
     int32_t signExtend(uint32_t value, uint32_t bits);
 
     void reset();
