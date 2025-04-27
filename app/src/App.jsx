@@ -88,7 +88,7 @@ done:
     try {
       setAssembled(true)
       let id = localStorage.getItem("id") ?? "";
-      const response = await axios.post("http://localhost:3000/assemble", { id, code: editorContent });
+      const response = await axios.post("https://risc-v-assembler-cs204.onrender.com/assemble", { id, code: editorContent });
       setMachineCode(response.data.machine_code);
       setdataSegment(response.data.data_segment);
       localStorage.setItem("id", response.data.id);
@@ -132,7 +132,7 @@ done:
   const handleStep = async () => {
     try {
       const id = localStorage.getItem("id") ?? "";
-      const response = await axios.post("http://localhost:3000/step", { id });
+      const response = await axios.post("https://risc-v-assembler-cs204.onrender.com/step", { id });
       setdataSegment(response.data.data_segment);
       setStack(response.data.stack);
       setRegisters(response.data.registers);
@@ -155,7 +155,7 @@ done:
   const handleRun = async () => {
     try {
       const id = localStorage.getItem("id") ?? "";
-      const response = await axios.post("http://localhost:3000/run", { id });
+      const response = await axios.post("https://risc-v-assembler-cs204.onrender.com/run", { id });
       setdataSegment(response.data.data_segment);
       setStack(response.data.stack);
       setRegisters(response.data.registers);
@@ -201,7 +201,7 @@ done:
     if (newValue === false && dataForwardingEnabled === true) toggleDataForwarding()
     console.log(newValue)
     setPipelineEnabled(newValue);
-    const response = await axios.post(`http://localhost:3000/pipeline?pipelineEnabled=${newValue}`, { id });
+    const response = await axios.post(`https://risc-v-assembler-cs204.onrender.com/pipeline?pipelineEnabled=${newValue}`, { id });
   };
 
   const toggleDataForwarding = async () => {
@@ -209,14 +209,14 @@ done:
     const newValue = !dataForwardingEnabled;
     if (newValue === false && branchPredictionEnabled === true) toggleBranchPrediction()
     setDataForwardingEnabled(newValue);
-    const response = await axios.post(`http://localhost:3000/dataForward/?dataForwardingEnabled=${newValue}`, { id });
+    const response = await axios.post(`https://risc-v-assembler-cs204.onrender.com/dataForward/?dataForwardingEnabled=${newValue}`, { id });
   };
 
   const toggleBranchPrediction = async () => {
     const id = localStorage.getItem("id") ?? "";
     const newValue = !branchPredictionEnabled;
     setBranchPredictionEnabled(newValue);
-    const response = await axios.post(`http://localhost:3000/branchPrediction/?branchPredictionEnabled=${newValue}`, { id });
+    const response = await axios.post(`https://risc-v-assembler-cs204.onrender.com/branchPrediction/?branchPredictionEnabled=${newValue}`, { id });
   };
 
   const stageColor = {
