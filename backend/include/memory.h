@@ -9,14 +9,15 @@ Stores memory for text and data segment
 #include <vector>
 #include <string>
 #include <limits>
+#include <map>
 
 class Memory {
 
 public:
 
-    std::unordered_map<uint32_t, uint32_t> instructionMemory;
-    std::unordered_map<uint32_t, uint8_t> dataMemory;
-    std::unordered_map<uint32_t, uint8_t> stackMemory;
+    std::map<uint32_t, uint32_t> instructionMemory;
+    std::map<uint32_t, uint8_t> dataMemory;
+    std::map<uint32_t, uint8_t> stackMemory;
     std::string comment;
     std::vector<std::string> pipelineComments;
     uint32_t exitAddress;
@@ -27,8 +28,8 @@ public:
     void storeString(uint32_t address, const std::string& str);
     uint32_t fetchInstruction(uint32_t address) const;
     uint8_t fetchData(uint32_t address) const;
-    const std::unordered_map<uint32_t, uint32_t>& getInstructionMemory() const;
-    const std::unordered_map<uint32_t, uint8_t>& getDataMemory() const;
+    const std::map<uint32_t, uint32_t>& getInstructionMemory() const;
+    const std::map<uint32_t, uint8_t>& getDataMemory() const;
     void dumpMemory();
     void dumpInstructions();
     void dumpStack();

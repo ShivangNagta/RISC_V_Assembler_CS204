@@ -73,22 +73,24 @@ void SBInstruction::execute(Cpu& cpu) const {
     // Calculate target address if condition is true
     if (condition) {
         if (cpu.pipeline) {
-            cpu.RZ = cpu.PC + imm - 8;
+            cpu.RZ = instructionPC + imm;
             if (cpu.predictionBool) {
                 if (cpu.RZ == cpu.PC - 4) {
                     // prediction was gud wow lesgo
                     comment = "[Execute] Prediction was correct, no flushing needed.";
                 } else {
                     // prediction was wrong, update PC
+                    
+                    comment = "[Execute] Prediction was wrong, updated to " + std::to_string(cpu.PC - 4) + " but should be " + std::to_string(cpu.RZ);
                     cpu.PC = cpu.RZ;
                     cpu.predictionBit = true; // update prediction to taken
     
                     // flushing
                     cpu.IR = 0;
-                    comment = "[Execute] Prediction was wrong, flushing pipeline.";
                 }
             } else {
                 cpu.PC = cpu.RZ;
+                comment = "[Execute] Branch taken. Target address = " + std::to_string(cpu.PC);
             }
         } else {
             cpu.PC = cpu.PC + imm - 4;  // Store target address, minus 4 to compensate +4 in fetch stage
@@ -98,18 +100,22 @@ void SBInstruction::execute(Cpu& cpu) const {
     } 
     else {
         if (cpu.pipeline) {
-            cpu.RZ = instructionPC + 4; // what should've been the next instruction
-            if (cpu.RZ == cpu.PC - 4) {
-                // prediction was gud wow lesgo
-                comment = "[Execute] Prediction was correct, no flushing needed.";
-            } else {
-                // prediction was wrong, update PC
-                cpu.PC = cpu.RZ;
-                cpu.predictionBit = false; // update prediction to not taken
+            if (cpu.predictionBool) {
+                cpu.RZ = instructionPC + 4; // what should've been the next instruction
+                if (cpu.RZ == cpu.PC - 4) {
+                    // prediction was gud wow lesgo
+                    comment = "[Execute] Prediction was correct, no flushing needed.";
+                } else {
+                    // prediction was wrong, update PC
+                    cpu.PC = cpu.RZ;
+                    cpu.predictionBit = false; // update prediction to not taken
 
-                // flushing
-                cpu.IR = 0;
-                comment = "[Execute] Prediction was wrong, flushing pipeline.";
+                    // flushing
+                    cpu.IR = 0;
+                    comment = "[Execute] Prediction was wrong, flushing pipeline.";
+                }
+            } else {
+                comment = "[Execute] Branch not taken. Target address = " + std::to_string(cpu.PC);
             }
         } else {
             comment = "[Execute] Branch not taken.";

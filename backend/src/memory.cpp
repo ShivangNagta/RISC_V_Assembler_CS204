@@ -44,12 +44,12 @@ uint8_t Memory::fetchData(uint32_t address) const {
 }
 
 
-const std::unordered_map<uint32_t, uint32_t>& Memory::getInstructionMemory() const {
+const std::map<uint32_t, uint32_t>& Memory::getInstructionMemory() const {
     return instructionMemory;
 }
 
 
-const std::unordered_map<uint32_t, uint8_t>& Memory::getDataMemory() const {
+const std::map<uint32_t, uint8_t>& Memory::getDataMemory() const {
     return dataMemory;
 }
 
