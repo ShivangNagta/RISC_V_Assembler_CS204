@@ -468,7 +468,7 @@ void Cpu::step()
         uint32_t oldPC = PC;
         if (memoryAccessedInstruction != nullptr) {
             write_back();
-            if (executedInstruction == nullptr && decodedInstruction == nullptr && memoryAccessedInstruction == nullptr) {
+            if (executedInstruction == nullptr && decodedInstruction == nullptr && memoryAccessedInstruction == nullptr && stalledInstruction == nullptr) {
                 std::stringstream ss;
                 ss << "Successfully Exited";
                 memory.comment = ss.str();
@@ -502,6 +502,11 @@ void Cpu::step()
 
         if (numberOfBubbles == 0 && stalledInstruction != nullptr) {
             decodedInstruction = std::move(stalledInstruction);
+            uint32_t rs1 = decodedInstruction->getRS1();
+            uint32_t rs2 = decodedInstruction->getRS2();
+            RA = registers[rs1];
+            if (rs2 != 32) RB = registers[rs2];
+            else RB = decodedInstruction->getImm();
         }
         numberOfBubbles = numberOfBubbles ? numberOfBubbles - 1 : numberOfBubbles;
         
