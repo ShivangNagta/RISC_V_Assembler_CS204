@@ -26,6 +26,16 @@ public:
     bool predictionBool  = false;
     bool predictionBit = false;
 
+    uint32_t totalInstructions;
+    uint32_t totalDataTransferInstructions;
+    uint32_t totalControlInstructions;
+    uint32_t totalBubbles;
+    uint32_t totalDataHazardBubbles;
+    uint32_t totalControlHazardBubbles;
+    uint32_t totalDataHazards;
+    uint32_t totalControlHazards;
+    uint32_t totalBranchMissPredictions;
+
     bool pipeline;
     bool data_forward;
 

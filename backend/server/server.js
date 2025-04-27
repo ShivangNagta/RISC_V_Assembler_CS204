@@ -133,13 +133,23 @@ app.post("/run", (req,res) => {
                 comment: "Finished",
                 pipeline: outputJSON.pipeline,
                 data_forward: outputJSON.data_forward,
-                pipeline_status: outputJSON.pipeline_status
+                pipeline_status: outputJSON.pipeline_status,
+
+                totalInstructions: outputJSON.totalInstructions,
+                totalDataTransferInstructions: outputJSON.totalDataTransferInstructions,
+                totalControlInstructions: outputJSON.totalControlInstructions,
+                totalBubbles: outputJSON.totalBubbles,
+                totalControlHazardBubbles: outputJSON.totalControlHazardBubbles,
+                totalDataHazardBubbles: outputJSON.totalDataHazardBubbles,
+                totalDataHazards: outputJSON.totalDataHazards,
+                totalControlHazards: outputJSON.totalControlHazards,
+                totalBranchMissPredictions: outputJSON.totalBranchMissPredictions
+
             });
         } catch (err) {
             res.status(500).json({ error: session.output });
         }
-    }, 500);
-    
+    }, 500);  
 })
 
 app.post("/pipeline", (req,res) => {

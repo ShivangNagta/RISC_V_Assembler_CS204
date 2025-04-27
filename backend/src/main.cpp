@@ -58,6 +58,24 @@ void runAndOutput()
     std::cout << (cpu.pipeline ? "\"On\"" : "\"Off\"");
     std::cout << ", \"data_forward\":";
     std::cout << (cpu.data_forward ? "\"On\"" : "\"Off\"");
+    std::cout << ", \"totalInstructions\":";
+    std::cout << cpu.totalInstructions;
+    std::cout << ", \"totalDataTransferInstructions\":";
+    std::cout << cpu.totalDataTransferInstructions;
+    std::cout << ", \"totalControlInstructions\":";
+    std::cout << cpu.totalControlInstructions;
+    std::cout << ", \"totalBubbles\":";
+    std::cout << cpu.totalBubbles;
+    std::cout << ", \"totalControlHazardBubbles\":";
+    std::cout << cpu.totalControlHazardBubbles;
+    std::cout << ", \"totalDataHazardBubbles\":";
+    std::cout << cpu.totalDataHazardBubbles;
+    std::cout << ", \"totalDataHazards\":";
+    std::cout << cpu.totalDataHazards;
+    std::cout << ", \"totalControlHazards\":";
+    std::cout << cpu.totalControlHazards;
+    std::cout << ", \"totalBranchMissPredictions\":";
+    std::cout << cpu.totalBranchMissPredictions;
     std::cout << " }" << std::endl;
 }
 

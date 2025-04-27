@@ -15,7 +15,10 @@ Step Cpu::currentStep = FETCH;
 Cpu::Cpu(Memory &memory) : PC(0), IR(0), RA(0), RB(0), RM(0), RY(0), RZ(0), clock(0), memory(memory), 
                             data_forward(false), pipeline(false), numberOfBubbles(0),
                             decodedInstruction(nullptr), executedInstruction(nullptr), memoryAccessedInstruction(nullptr), 
-                            writebackedInstruction(nullptr), stalledInstruction(nullptr), dataForwardPair(std::make_pair("", ""))
+                            writebackedInstruction(nullptr), stalledInstruction(nullptr), dataForwardPair(std::make_pair("", "")),
+                            totalInstructions(0), totalDataTransferInstructions(0), totalControlInstructions(0), totalBubbles(0),
+                            totalDataHazardBubbles(0), totalControlHazardBubbles(0), totalDataHazards(0), totalControlHazards(0),
+                            totalBranchMissPredictions(0)
 {
     for (int i = 0; i < 32; i++)
     {
@@ -99,6 +102,10 @@ void Cpu::decode()
         RA = registers[rs1];
         if (rs2 != 32) RB = registers[rs2];
         else RB = decodedInstruction->getImm();
+
+        uint32_t rs1Bubbles = 0;
+        uint32_t rs2Bubbles = 0;
+
         for (int i = 0; i < 5; ++i) {
             // check rs1
             if (rs1 != 32 && rs1 == rdVec[i]) {
@@ -112,9 +119,11 @@ void Cpu::decode()
                 case 2:
                     numberOfBubbles = 1;
                     stalledInstruction = std::move(decodedInstruction);
+                    rs1Bubbles++;
                     break;
                 case 3:
                     numberOfBubbles = 2;
+                    rs1Bubbles += 2;
                     stalledInstruction = std::move(decodedInstruction);
                     break;
                 default:
@@ -130,10 +139,12 @@ void Cpu::decode()
                 {
                 case 2:
                     numberOfBubbles = std::max(1, numberOfBubbles);
+                    rs2Bubbles = numberOfBubbles;
                     stalledInstruction = std::move(decodedInstruction);
                     break;
                 case 3:
                     numberOfBubbles = std::max(2, numberOfBubbles);
+                    rs2Bubbles = numberOfBubbles;
                     stalledInstruction = std::move(decodedInstruction);
                     break;
                 default:
@@ -148,6 +159,8 @@ void Cpu::decode()
                 branchPrediction(instrName, decodedInstruction->getImm());
             }
         }
+        totalBubbles += std::max(rs1Bubbles, rs2Bubbles);
+        totalDataHazardBubbles += std::max(rs1Bubbles, rs2Bubbles);
         IR = 0;
     }
 }
@@ -172,6 +185,9 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
         if (executedInstruction->getName() == "LD" || executedInstruction->getName() == "LW"
             || executedInstruction->getName() == "LH" || executedInstruction->getName() == "LB") {
             numberOfBubbles = 1;
+            totalDataHazards++;
+            totalBubbles++;
+            totalDataHazardBubbles++;
             stalledInstruction = std::move(decodedInstruction);
             if (rsNo == 0) {
                 dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
@@ -207,6 +223,7 @@ void Cpu::doDataForwarding() {
 
     // std::cout << "[Data Forwarding] Data Forwarding" << std::endl;
     for (auto& [key, value] : dataForwardMap) {
+        totalDataHazards++;
         auto [fromPC, toPC] = key;
         auto [fromBuffer, toBuffer] = value;
         // std::cout << "[Data Forwarding] Data Forwarding from " << std::hex << fromPC << " to " << std::hex << toPC << std::endl;
@@ -474,6 +491,15 @@ void Cpu::write_back()
     if (pipeline) {
         memoryAccessedInstruction->writeback(*this);
         writebackedInstruction = std::move(memoryAccessedInstruction);
+        totalInstructions++;
+        if (writebackedInstruction->getName() == "LB" && writebackedInstruction->getName() == "LH" && writebackedInstruction->getName() == "LW" && writebackedInstruction->getName() == "LD"
+            && writebackedInstruction->getName() == "SB" && writebackedInstruction->getName() == "SH" && writebackedInstruction->getName() == "SW" && writebackedInstruction->getName() == "SD") {
+                totalDataTransferInstructions++;
+            }
+        if (writebackedInstruction->getName() == "JAL" && writebackedInstruction->getName() == "JALR" &&
+            writebackedInstruction->getName() == "BEQ" && writebackedInstruction->getName() == "BNE" && writebackedInstruction->getName() == "BLT" && writebackedInstruction->getName() == "BGE") {
+                totalControlInstructions++;
+            }
     } else {
         if (!currentInstruction)
         {
@@ -482,6 +508,15 @@ void Cpu::write_back()
         }
         // std::cout << "[Write Back] Writing results to registers." << std::endl;
         currentInstruction->writeback(*this);
+        totalInstructions++;
+        if (currentInstruction->getName() == "LB" && currentInstruction->getName() == "LH" && currentInstruction->getName() == "LW" && currentInstruction->getName() == "LD"
+        && currentInstruction->getName() == "SB" && currentInstruction->getName() == "SH" && currentInstruction->getName() == "SW" && currentInstruction->getName() == "SD") {
+            totalDataTransferInstructions++;
+        }
+        if (currentInstruction->getName() == "JAL" && currentInstruction->getName() == "JALR" &&
+        currentInstruction->getName() == "BEQ" && currentInstruction->getName() == "BNE" && currentInstruction->getName() == "BLT" && currentInstruction->getName() == "BGE") {
+            totalControlInstructions++;
+        }
     }
 
 }
@@ -511,14 +546,24 @@ void Cpu::step()
         if (numberOfBubbles == 0) {
             fetch();
             if (!predictionBool) {
-                if (oldPC != PC - 4) decodedInstruction = nullptr;
+                if (oldPC != PC - 4) {
+                    decodedInstruction = nullptr;
+                    totalBubbles += 1;
+                    totalControlHazardBubbles += 1;
+                    totalControlHazards++;
+                } 
             }
         } else {
             std::stringstream ss;
             ss << "Stalling for instruction at PC : " << PC - 4;
             memory.pipelineComments.push_back(ss.str());
             if (!predictionBool) {
-                if (oldPC != PC) decodedInstruction = nullptr;
+                if (oldPC != PC) {
+                    decodedInstruction = nullptr;
+                    totalBubbles += 1;
+                    totalControlHazardBubbles += 1;
+                    totalControlHazards++;
+                } 
             }
         }
 
@@ -652,8 +697,23 @@ void Cpu::reset()
     RM = 0;
     RY = 0;
     RZ = 0;
+    RA = 0;
+    RB = 0;
     clock = 0;
+
+    totalInstructions = 0;
+    totalDataTransferInstructions = 0;
+    totalControlInstructions = 0;
+    totalBubbles = 0;
+    totalDataHazardBubbles = 0;
+    totalControlHazardBubbles = 0;
+    totalDataHazards = 0;
+    totalControlHazards = 0;
+    totalBranchMissPredictions = 0;
+
     memory.reset();
+    predictionBool  = false;
+    predictionBit = false;
 }
 
 std::string Cpu::dumpPipelineStages()

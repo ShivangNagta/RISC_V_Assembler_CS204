@@ -21,6 +21,17 @@ export default function App() {
   const [dataForwardingEnabled, setDataForwardingEnabled] = useState(false);
   const [branchPredictionEnabled, setBranchPredictionEnabled] = useState(false);
   const [pipelineInstructions, setPipelineInstructions] = useState({})
+
+  const [totalInstructions, setTotalInstructions] = useState(0);
+  const [totalDataTransferInstructions, setTotalDataTransferInstructions] = useState(0);
+  const [totalControlInstructions, setTotalControlInstructions] = useState(0);
+  const [totalBubbles, setTotalBubbles] = useState(0);
+  const [totalControlHazardBubbles, setTotalControlHazardBubbles] = useState(0);
+  const [totalDataHazardBubbles, setTotalDataHazardBubbles] = useState(0);
+  const [totalDataHazards, setTotalDataHazards] = useState(0);
+  const [totalControlHazards, setTotalControlHazards] = useState(0);
+  const [totalBranchMissPredictions, setTotalBranchMissPredictions] = useState(0);
+
   const [editorContent, setEditorContent] = useState(`#Default
 
 .data
@@ -106,6 +117,16 @@ done:
     setRY(0);
     setRZ(0);
     setRM(0);
+
+    setTotalBranchMissPredictions(0);
+    setTotalBubbles(0);
+    setTotalControlHazardBubbles(0);
+    setTotalControlHazards(0);
+    setTotalControlInstructions(0);
+    setTotalDataHazardBubbles(0);
+    setTotalDataHazards(0);
+    setTotalDataTransferInstructions(0);
+    setTotalInstructions(0);
   };
 
   const handleStep = async () => {
@@ -124,6 +145,8 @@ done:
       setRY(response.data.ry)
       setRZ(response.data.rz)
       setRM(response.data.rm)
+
+
     } catch (err) {
       setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
@@ -138,6 +161,17 @@ done:
       setRegisters(response.data.registers);
       setClockCycles(response.data.clock_cycles);
       setComment(response.data.comment);
+
+      setTotalInstructions(response.data.totalInstructions);
+      setTotalDataTransferInstructions(response.data.totalDataTransferInstructions);
+      setTotalControlInstructions(response.data.totalControlInstructions);
+      setTotalBubbles(response.data.totalBubbles);
+      setTotalControlHazardBubbles(response.data.totalControlHazardBubbles);
+      setTotalDataHazardBubbles(response.data.totalDataHazardBubbles);
+      setTotalDataHazards(response.data.totalDataHazards);
+      setTotalControlHazards(response.data.totalControlHazards);
+      setTotalBranchMissPredictions(response.data.totalBranchMissPredictions);
+
     } catch (err) {
       setError(`${err.response?.data?.error ?? "Unknown Error"}`);
     }
@@ -382,57 +416,141 @@ done:
                 >
                   Memory
                 </div>
+                <div 
+                  onClick={() => setRightTab("stats")} 
+                  className={`p-3 cursor-pointer flex-1 text-center transition-colors
+                    ${rightTab === "stats" ? "bg-zinc-800 text-zinc-100" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"}`}
+                >
+                  Stats
+                </div>
               </div>
 
               {/* Content based on selected tab - Scrollable */}
               <div className="overflow-auto flex-grow m-2">
                 <div className="border border-zinc-800 p-3 text-sm bg-zinc-950 shadow-inner rounded h-full">
-                  {rightTab === "registers" ? (
-                    <>
-                      <h1 className="mb-3 text-xl font-bold text-zinc-300 border-b border-zinc-800 pb-2 sticky top-0 bg-zinc-950 z-10">Registers</h1>
-                      <div className="space-y-1">
-                        {Object.entries(registers).length > 0 ? (
-                          Object.entries(registers).map(([name, value], i) => (
-                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
-                              <span className="font-mono text-zinc-300">{name}</span>
-                              <span className="font-mono text-lime-400">{value}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-zinc-500 text-center py-4">No register data available</div>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="mb-6">
-                        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">Stack Segment</h2>
-                        {Object.entries(stack).length > 0 ? (
-                          Object.entries(stack).map(([addr, value], i) => (
-                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
-                              <span className="font-mono text-zinc-300">{addr}</span>
-                              <span className="font-mono text-lime-400">{value}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-zinc-500 text-center py-2">No stack data available</div>
-                        )}
-                      </div>
-                      <div>
-                        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">Data Segment</h2>
-                        {Object.entries(dataSegment).length > 0 ? (
-                          Object.entries(dataSegment).map(([addr, value], i) => (
-                            <div key={i} className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
-                              <span className="font-mono text-zinc-300">{addr}</span>
-                              <span className="font-mono text-lime-400">{value}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-zinc-500 text-center py-2">No data segment available</div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                {rightTab !== "stats" ? (
+  rightTab === "registers" ? (
+    <>
+      {/* Registers Tab */}
+      <h1 className="mb-3 text-xl font-bold text-zinc-300 border-b border-zinc-800 pb-2 sticky top-0 bg-zinc-950 z-10">
+        Registers
+      </h1>
+      <div className="space-y-1">
+        {Object.entries(registers).length > 0 ? (
+          Object.entries(registers).map(([name, value], i) => (
+            <div
+              key={i}
+              className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded"
+            >
+              <span className="font-mono text-zinc-300">{name}</span>
+              <span className="font-mono text-lime-400">{value}</span>
+            </div>
+          ))
+        ) : (
+          <div className="text-zinc-500 text-center py-4">
+            No register data available
+          </div>
+        )}
+      </div>
+    </>
+  ) : (
+    <>
+      {/* Stack and Data Segment Tab */}
+      <div className="mb-6">
+        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">
+          Stack Segment
+        </h2>
+        {Object.entries(stack).length > 0 ? (
+          Object.entries(stack).map(([addr, value], i) => (
+            <div
+              key={i}
+              className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded"
+            >
+              <span className="font-mono text-zinc-300">{addr}</span>
+              <span className="font-mono text-lime-400">{value}</span>
+            </div>
+          ))
+        ) : (
+          <div className="text-zinc-500 text-center py-2">
+            No stack data available
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="text-zinc-300 mb-2 font-bold border-b border-zinc-800 pb-1 sticky top-0 bg-zinc-950 z-10">
+          Data Segment
+        </h2>
+        {Object.entries(dataSegment).length > 0 ? (
+          Object.entries(dataSegment).map(([addr, value], i) => (
+            <div
+              key={i}
+              className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded"
+            >
+              <span className="font-mono text-zinc-300">{addr}</span>
+              <span className="font-mono text-lime-400">{value}</span>
+            </div>
+          ))
+        ) : (
+          <div className="text-zinc-500 text-center py-2">
+            No data segment available
+          </div>
+        )}
+      </div>
+    </>
+  )
+) : (
+  <>
+    {/* Stats Tab */}
+    <div className="text-zinc-300 text-center py-4">
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Total Cycles</span>
+            <span className="font-mono text-lime-400">{clockCycles}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Total Instructions Executed</span>
+            <span className="font-mono text-lime-400">{totalInstructions}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">CPI</span>
+            <span className="font-mono text-lime-400">{(clockCycles / totalInstructions).toFixed(2)}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of Data-transfer instructions</span>
+            <span className="font-mono text-lime-400">{totalDataTransferInstructions}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of Control instructions</span>
+            <span className="font-mono text-lime-400">{totalControlInstructions}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of stalls/bubbles</span>
+            <span className="font-mono text-lime-400">{totalBubbles}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of data hazards</span>
+            <span className="font-mono text-lime-400">{totalDataHazards}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of control hazards</span>
+            <span className="font-mono text-lime-400">{totalControlHazards}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of branch mispredictions</span>
+            <span className="font-mono text-lime-400">{totalBranchMissPredictions}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of stalls due to data hazards</span>
+            <span className="font-mono text-lime-400">{totalDataHazardBubbles}</span>
+      </div>
+      <div className="flex justify-between py-1 hover:bg-zinc-900 px-2 rounded">
+            <span className="font-mono text-zinc-300">Number of stalls due to control hazards</span>
+            <span className="font-mono text-lime-400">{totalControlHazardBubbles}</span>
+      </div>
+    </div>
+  </>
+)}
+
                 </div>
               </div>
 

@@ -87,6 +87,10 @@ void SBInstruction::execute(Cpu& cpu) const {
     
                     // flushing
                     cpu.IR = 0;
+                    cpu.totalBubbles += 1;
+                    cpu.totalControlHazardBubbles += 1;
+                    cpu.totalControlHazards += 1;
+                    cpu.totalBranchMissPredictions += 1;
                 }
             } else {
                 cpu.PC = cpu.RZ;
@@ -112,6 +116,11 @@ void SBInstruction::execute(Cpu& cpu) const {
 
                     // flushing
                     cpu.IR = 0;
+                    cpu.totalBubbles += 1;
+                    cpu.totalControlHazardBubbles += 1;
+                    cpu.totalControlHazards += 1;
+                    cpu.totalBranchMissPredictions += 1;
+
                     comment = "[Execute] Prediction was wrong, flushing pipeline.";
                 }
             } else {
