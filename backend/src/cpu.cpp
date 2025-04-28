@@ -184,15 +184,21 @@ void Cpu::checkDataForwarding(std::unique_ptr<Instruction>& decodedInstruction, 
         // M to E, if executedInstruction is load, with 1 bubble
         if (executedInstruction->getName() == "LD" || executedInstruction->getName() == "LW"
             || executedInstruction->getName() == "LH" || executedInstruction->getName() == "LB") {
-            numberOfBubbles = 1;
-            totalDataHazards++;
-            totalBubbles++;
-            totalDataHazardBubbles++;
-            stalledInstruction = std::move(decodedInstruction);
-            if (rsNo == 0) {
-                dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
+            if (decodedInstruction->getName() == "SD" || decodedInstruction->getName() == "SW"
+                || decodedInstruction->getName() == "SH" || decodedInstruction->getName() == "SB") {
+                // std::cout << "M to M" << std::endl;
+                dataForwardMap[{executedInstruction->instructionPC, decodedInstruction->instructionPC}] = { Buffers::RY, Buffers::RM };
             } else {
-                dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
+                numberOfBubbles = 1;
+                totalDataHazards++;
+                totalBubbles++;
+                totalDataHazardBubbles++;
+                stalledInstruction = std::move(decodedInstruction);
+                if (rsNo == 0) {
+                    dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RA };
+                } else {
+                    dataForwardMap[{executedInstruction->instructionPC, stalledInstruction->instructionPC}] = { Buffers::RY, Buffers::RB };
+                }
             }
         } else { // E to E for anything else
             // std::cout << "E to E" << std::endl;
@@ -221,6 +227,9 @@ const char* bufferTypeToString(Cpu::Buffers buffer) {
 
 void Cpu::doDataForwarding() {
 
+    bool pendingLoadToStore = false;
+    std::pair<uint32_t, uint32_t> pendingKey;
+
     // std::cout << "[Data Forwarding] Data Forwarding" << std::endl;
     for (auto& [key, value] : dataForwardMap) {
         totalDataHazards++;
@@ -231,18 +240,22 @@ void Cpu::doDataForwarding() {
         dataForwardPair.second = bufferTypeToString(toBuffer);
         // std::cout << "[Data Forwarding] Data Forwarding from " << bufferTypeToString(fromBuffer) << " to " << bufferTypeToString(toBuffer) << std::endl;
         if (fromBuffer == Buffers::RY) {
-            if (toBuffer == Buffers::RA) {
+            if (toBuffer == Buffers::RA) { // M to E
                 RA = RY;
             } else if (toBuffer == Buffers::RB) {
                 RB = RY;
+            } else if (toBuffer == Buffers::RM) { // M to M
+                if (loadToStoreForwarding) {
+                    RM = RY;
+                    loadToStoreForwarding = false;
+                    totalDataHazards--;
+                } else {
+                    loadToStoreForwarding = true;
+                    pendingLoadToStore = true;
+                    pendingKey = key;
+                }
             }
-        } else if (fromBuffer == Buffers::RM) {
-            if (toBuffer == Buffers::RA) {
-                RA = RM;
-            } else if (toBuffer == Buffers::RB) {
-                RB = RM;
-            }
-        } else if (fromBuffer == Buffers::RZ) {
+        } else if (fromBuffer == Buffers::RZ) { // E to E
             if (toBuffer == Buffers::RA) {
                 RA = RZ;
             } else if (toBuffer == Buffers::RB) {
@@ -251,8 +264,21 @@ void Cpu::doDataForwarding() {
         }
     }
 
-    // clear the data forward map after use
-    dataForwardMap.clear();
+    if (!pendingLoadToStore){
+        dataForwardMap.clear();
+    } else{
+        // Keep the pending M to M, erase all others
+        for (auto it = dataForwardMap.begin(); it != dataForwardMap.end(); ) {
+            if (it->first != pendingKey) {
+                it = dataForwardMap.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        dataForwardPair.first = "";
+        dataForwardPair.second = "";
+    }
 }
 
 void Cpu::branchPrediction(std::string instrName, uint32_t imm) {
@@ -527,10 +553,11 @@ void Cpu::step()
         uint32_t oldPC = PC;
         if (memoryAccessedInstruction != nullptr) {
             write_back();
-            if (executedInstruction == nullptr && decodedInstruction == nullptr && memoryAccessedInstruction == nullptr && stalledInstruction == nullptr) {
+            if (executedInstruction == nullptr && decodedInstruction == nullptr && stalledInstruction == nullptr) {
                 std::stringstream ss;
                 ss << "Successfully Exited";
                 memory.comment = ss.str();
+                clock++;
                 return;
             }
         }
@@ -546,7 +573,7 @@ void Cpu::step()
         if (numberOfBubbles == 0) {
             fetch();
             if (!predictionBool) {
-                if (oldPC != PC - 4) {
+                if (oldPC != PC - 4 && PC != 10004) {
                     decodedInstruction = nullptr;
                     totalBubbles += 1;
                     totalControlHazardBubbles += 1;

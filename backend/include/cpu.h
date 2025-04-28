@@ -38,6 +38,7 @@ public:
 
     bool pipeline;
     bool data_forward;
+    bool loadToStoreForwarding = false;
 
     std::pair<std::string, std::string> dataForwardPair;
 
